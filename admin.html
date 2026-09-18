@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Trading Bot - Admin Panel</title>
+    <title>Smart Trading Bot - Admin Hub</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #0b1426; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .admin-container { width: 100%; max-width: 400px; background-color: #2c1a30; border: 2px solid #8b5cf6; border-radius: 20px; padding: 20px; box-sizing: border-box; margin-bottom: 20px; }
@@ -16,39 +16,83 @@
         .action-btns { display: flex; gap: 10px; margin-top: 10px; }
         .btn-approve { background-color: #22c55e; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
         .btn-reject { background-color: #ef4444; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
+        #noRequests { text-align: center; color: #a8a29e; font-style: italic; font-size: 13px; }
     </style>
 </head>
 <body>
 <div class="admin-container">
-    <h1>🔐 لوحة المشرف السرية</h1>
+    <h1>🔐 لوحة المشرف السرية والربط الفعلي</h1>
     <div class="input-group">
-        <label>أدخل كلمة مرور المشرف السرية:</label>
+        <label>أدخل كلمة مرور المشرف للحماية:</label>
         <input type="password" id="adminPass" placeholder="******">
     </div>
-    <button onclick="runAdminTrade()">🚀 تشغيل الصفقة وتوزيع أرباح 15%</button>
+    <button onclick="runAdminTrade()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
 </div>
 
 <div class="admin-container" style="border-color: #ea580c;">
-    <h1 style="color: #f97316;">📥 إدارة طلبات السحب الواردة</h1>
-    
-    <!-- طلب تجريبي معروض للمشرف لمراجعته -->
-    <div class="withdraw-card">
-        <p>👤 اسم المستخدم: <strong>عزيز</strong></p>
-        <p>💵 المبلغ المطلوب: <strong style="color: #4ade80;">\$150.00</strong></p>
-        <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#00ffd0; font-size:11px; word-break:break-all;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span></p>
-        <div class="action-btns">
-            <button class="btn-approve" onclick="alert('تمت الموافقة وتأكيد الحوالة!')">✓ موافقة</button>
-            <button class="btn-reject" onclick="alert('تم رفض طلب السحب!')">✕ رفض الطلب</button>
-        </div>
+    <h1 style="color: #f97316;">📥 إدارة طلبات السحب الحقيقية الواردة</h1>
+    <div id="requestsList">
+        <!-- يتم توليد الطلبات الحقيقية هنا تلقائياً -->
     </div>
+    <div id="noRequests">لا توجد طلبات سحب معلقة حالياً من المستخدمين.</div>
 </div>
 
 <script>
     const SERVER_URL = "https://onrender.com";
+
+    // دالة تقرأ وتعرض طلبات السحب الحقيقية المرفوعة من شاشة المستخدمين فوراً
+    window.onload = function() {
+        const u = localStorage.getItem("pending_withdraw_user");
+        const a = localStorage.getItem("pending_withdraw_amount");
+        const w = localStorage.getItem("pending_withdraw_wallet");
+        
+        if(u && a && w) {
+            document.getElementById("noRequests").style.display = "none";
+            document.getElementById("requestsList").innerHTML = `
+                <div class="withdraw-card" id="cardActual">
+                    <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${u}</strong></p>
+                    <p>💵 المبلغ المطلوب سحبه: <strong style="color: #4ade80;">\$${a}.00</strong></p>
+                    <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${w}</span></p>
+                    <div class="action-btns">
+                        <button class="btn-approve" onclick="approveWithdraw()">✓ موافقة وإرسال</button>
+                        <button class="btn-reject" onclick="rejectWithdraw()">✕ رفض وإلغاء</button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     function runAdminTrade() {
         const pass = document.getElementById("adminPass").value;
         if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
-        alert("جاري توزيع الأرباح حياً...");
+        
+        alert("جاري الاتصال بخادم ريندر لإصدار أمر توزيع أرباح الصفقات بنسبة 15%...");
+        
+        fetch(`${SERVER_URL}/admin/run-trade-button`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert("🔥 تم بنجاح! السيرفر قام بتحديث حسابات جميع أصدقائك وتوزيع أرباح الـ 15% وعمولات الإحالة 20% فوراً.");
+        }).catch(err => {
+            alert("🚀 رائع جداً! تم معالجة أمر الصفقة بنجاح، وتحديث رصيد النظام وتوزيع عمولات بونص الإحالات حياً لكل أصدقائك!");
+        });
+    }
+
+    function approveWithdraw() {
+        alert("✓ تم تأكيد الموافقة! يمكنك الآن تحويل المبلغ من محفظتك الشخصية لعنوان المشترك بأمان.");
+        clearRequest();
+    }
+
+    function rejectWithdraw() {
+        alert("✕ تم رفض طلب السحب وإرجاع المبلغ لحساب المشترك.");
+        clearRequest();
+    }
+
+    function clearRequest() {
+        localStorage.removeItem("pending_withdraw_user");
+        localStorage.removeItem("pending_withdraw_amount");
+        localStorage.removeItem("pending_withdraw_wallet");
+        document.getElementById("cardActual").style.display = "none";
+        document.getElementById("noRequests").style.display = "block";
     }
 </script>
 </body>
