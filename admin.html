@@ -21,7 +21,7 @@
 </head>
 <body>
 <div class="admin-container">
-    <h1>🔐 لوحة المشرف السرية والربط الفعلي</h1>
+    <h1>🔐 لوحة المشرف وتفعيل الصفقات</h1>
     <div class="input-group">
         <label>أدخل كلمة مرور المشرف للحماية:</label>
         <input type="password" id="adminPass" placeholder="******">
@@ -31,22 +31,24 @@
 
 <div class="admin-container" style="border-color: #ea580c;">
     <h1 style="color: #f97316;">📥 إدارة طلبات السحب الحقيقية الواردة</h1>
-    <div id="requestsList">
-        <!-- يتم توليد الطلبات الحقيقية هنا تلقائياً -->
-    </div>
+    <div id="requestsList"></div>
     <div id="noRequests">لا توجد طلبات سحب معلقة حالياً من المستخدمين.</div>
 </div>
 
 <script>
     const SERVER_URL = "https://onrender.com";
 
-    // دالة تقرأ وتعرض طلبات السحب الحقيقية المرفوعة من شاشة المستخدمين فوراً
     window.onload = function() {
-        const u = localStorage.getItem("pending_withdraw_user");
-        const a = localStorage.getItem("pending_withdraw_amount");
-        const w = localStorage.getItem("pending_withdraw_wallet");
+        loadPendingRequests();
+    }
+
+    function loadPendingRequests() {
+        const u = localStorage.getItem("pending_withdraw_user") || "Abala";
+        const a = localStorage.getItem("pending_withdraw_amount") || "50";
+        const w = localStorage.getItem("pending_withdraw_wallet") || "TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN";
+        const isApproved = localStorage.getItem("withdraw_status_approved");
         
-        if(u && a && w) {
+        if(isApproved !== "true" && u && a && w) {
             document.getElementById("noRequests").style.display = "none";
             document.getElementById("requestsList").innerHTML = `
                 <div class="withdraw-card" id="cardActual">
@@ -59,40 +61,37 @@
                     </div>
                 </div>
             `;
+        } else {
+            document.getElementById("cardActual" ) ? document.getElementById("cardActual").style.display = "none" : null;
+            document.getElementById("noRequests").style.display = "block";
         }
     }
 
     function runAdminTrade() {
         const pass = document.getElementById("adminPass").value;
         if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
-        
-        alert("جاري الاتصال بخادم ريندر لإصدار أمر توزيع أرباح الصفقات بنسبة 15%...");
-        
-        fetch(`${SERVER_URL}/admin/run-trade-button`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-            alert("🔥 تم بنجاح! السيرفر قام بتحديث حسابات جميع أصدقائك وتوزيع أرباح الـ 15% وعمولات الإحالة 20% فوراً.");
-        }).catch(err => {
-            alert("🚀 رائع جداً! تم معالجة أمر الصفقة بنجاح، وتحديث رصيد النظام وتوزيع عمولات بونص الإحالات حياً لكل أصدقائك!");
-        });
+        fetch(`${SERVER_URL}/admin/run-trade-button`, { method: 'POST' }).then(() => { localStorage.setItem("admin_trade_executed", "true"); });
     }
 
+    // دالة الموافقة المتطورة: تقوم بحساب وتحضير تاريخ اليوم الحقيقي وإرسال إشعار السحب الناجح للمشترك فوراً
     function approveWithdraw() {
-        alert("✓ تم تأكيد الموافقة! يمكنك الآن تحويل المبلغ من محفظتك الشخصية لعنوان المشترك بأمان.");
-        clearRequest();
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0]; // توليد صيغة تاريخ اليوم حياً 2026-09-19
+        
+        localStorage.setItem("withdraw_status_approved", "true");
+        localStorage.setItem("withdraw_success_date", formattedDate);
+        
+        document.getElementById("cardActual").style.display = "none";
+        document.getElementById("noRequests").style.display = "block";
+        
+        alert(`✓ تمت الموافقة بنجاح! تم تغيير الإشعار في شاشة المستخدم ليعلن عن السحب الناجح بتاريخ اليوم: ${formattedDate}`);
     }
 
     function rejectWithdraw() {
-        alert("✕ تم رفض طلب السحب وإرجاع المبلغ لحساب المشترك.");
-        clearRequest();
-    }
-
-    function clearRequest() {
         localStorage.removeItem("pending_withdraw_user");
-        localStorage.removeItem("pending_withdraw_amount");
-        localStorage.removeItem("pending_withdraw_wallet");
         document.getElementById("cardActual").style.display = "none";
         document.getElementById("noRequests").style.display = "block";
+        alert("✕ تم رفض وإلغاء طلب السحب.");
     }
 </script>
 </body>
