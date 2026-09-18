@@ -27,7 +27,7 @@
         <label>أدخل كلمة مرور المشرف للحماية:</label>
         <input type="password" id="adminPass" placeholder="******">
     </div>
-    <button onclick="executeLiveTradeServer()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
+    <button onclick="runAdminTradeRender()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
 </div>
 
 <div class="admin-container" style="border-color: #22c55e;">
@@ -43,104 +43,95 @@
 </div>
 
 <script>
-    const SERVER_URL = "https://onrender.com";
+    const RENDER_SERVER = "https://onrender.com";
 
     window.onload = function() {
-        // فحص الطلبات الحقيقية القادمة من السيرفر كل 3 ثوانٍ
-        setInterval(fetchLiveServerRequests, 3000);
+        // الاتصال بالسيرفر وجلب طلبات المستخدمين حياً كل 3 ثوانٍ وتحديث الشاشة
+        setInterval(fetchAdminDataFromRender, 3000);
     }
 
-    function fetchLiveServerRequests() {
-        const u = localStorage.getItem("pending_deposit_user") || "عبد";
-        const isPendingDep = localStorage.getItem(`dep_status_${u}`) === "pending";
-        const isPendingWit = localStorage.getItem(`wit_status_${u}`) === "pending";
+    function fetchAdminDataFromRender() {
+        fetch(`${RENDER_SERVER}/admin/get-requests`)
+        .then(res => res.json())
+        .then(data => {
+            // عرض طلب الإيداع القادم من السيرفر حياً
+            if(data && data.pending_deposit_user) {
+                document.getElementById("noDeposits").style.display = "none";
+                document.getElementById("depositList").innerHTML = `
+                    <div class="request-card" style="border-color: #22c55e;">
+                        <p>👤 اسم المشترك الطالب: <strong style="color:#00ffd0;">${data.pending_deposit_user}</strong></p>
+                        <p>💵 المبلغ المطلوب إيداعه: <strong style="color: #4ade80;">\$${data.pending_deposit_amount}.00 الحقيقي</strong></p>
+                        <div class="action-btns">
+                            <button class="btn-approve" onclick="approveDepositRender('${data.pending_deposit_user}')">✓ موافقة وشحن الحساب</button>
+                            <button class="btn-reject" onclick="rejectDepositRender('${data.pending_deposit_user}')">✕ رفض الطلب</button>
+                        </div>
+                    </div>`;
+            } else {
+                document.getElementById("noDeposits").style.display = "block";
+                document.getElementById("depositList").innerHTML = "";
+            }
 
-        // عرض طلب الإيداع حياً إذا أرسله مستخدم للسيرفر
-        if (isPendingDep) {
-            document.getElementById("noDeposits").style.display = "none";
-            document.getElementById("depositList").innerHTML = `
-                <div class="request-card" style="border-color: #22c55e;">
-                    <p>👤 اسم المشترك الطالب: <strong style="color:#00ffd0;">${u}</strong></p>
-                    <p>💵 المبلغ المطلوب إيداعه: <strong style="color: #4ade80;">\$${localStorage.getItem(`dep_amt_\${u}`)}.00 حقيقي</strong></p>
-                    <div class="action-btns">
-                        <button class="btn-approve" onclick="approveDepositLive('${u}')">✓ موافقة وشحن الحساب</button>
-                        <button class="btn-reject" onclick="rejectDepositLive('${u}')">✕ رفض الطلب</button>
-                    </div>
-                </div>`;
-        } else {
-            document.getElementById("noDeposits").style.display = "block";
-            document.getElementById("depositList").innerHTML = "";
-        }
-
-        // عرض طلب السحب حياً إذا أرسله مستخدم للسيرفر
-        if (isPendingWit) {
-            document.getElementById("noRequests").style.display = "none";
-            document.getElementById("requestsList").innerHTML = `
-                <div class="request-card" style="border-color: #ea580c;">
-                    <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${u}</strong></p>
-                    <p>💵 المبلغ المطلوب سحبه: <strong style="color: #ef4444;">\$${localStorage.getItem(`wit_amt_\${u}`)}.00</strong></p>
-                    <p>💼 محفظة المستلم: <span style="color:#accent-color; font-size:11px;">${localStorage.getItem(`wit_wal_\${u}`)}</span></p>
-                    <div class="action-btns">
-                        <button class="btn-approve" onclick="approveWithdrawLive('${u}')">✓ موافقة وإرسال</button>
-                        <button class="btn-reject" onclick="rejectWithdrawLive('${u}')">✕ رفض وإلغاء</button>
-                    </div>
-                </div>`;
-        } else {
-            document.getElementById("noRequests").style.display = "block";
-            document.getElementById("requestsList").innerHTML = "";
-        }
+            // عرض طلب السحب القادم من السيرفر حياً
+            if(data && data.pending_withdraw_user) {
+                document.getElementById("noRequests").style.display = "none";
+                document.getElementById("requestsList").innerHTML = `
+                    <div class="request-card" style="border-color: #ea580c;">
+                        <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${data.pending_withdraw_user}</strong></p>
+                        <p>💵 المبلغ المطلوب سحبه: <strong style="color: #ef4444;">\$${data.pending_withdraw_amount}.00</strong></p>
+                        <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${data.pending_withdraw_wallet}</span></p>
+                        <div class="action-btns">
+                            <button class="btn-approve" onclick="approveWithdrawRender('${data.pending_withdraw_user}')">✓ موافقة وإرسال</button>
+                            <button class="btn-reject" onclick="rejectWithdrawRender('${data.pending_withdraw_user}')">✕ رفض وإلغاء</button>
+                        </div>
+                    </div>`;
+            } else {
+                document.getElementById("noRequests").style.display = "block";
+                document.getElementById("requestsList").innerHTML = "";
+            }
+        });
     }
 
-    function approveDepositLive(user) {
-        const amt = localStorage.getItem(`dep_amt_${user}`);
-        localStorage.setItem(`balance_${user}`, amt);
-        localStorage.setItem(`dep_status_${user}`, "approved");
-        alert(`✅ تم تأكيد استلام الحوالة وشحن رصيد حقيقي بقيمة \$${amt} للمستخدم (${user}) عبر السيرفر!`);
+    function approveDepositRender(user) {
+        fetch(`${RENDER_SERVER}/admin/approve-deposit`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: user })
+        }).then(() => alert("✅ تم الموافقة وشحن حساب المشترك بالرصيد الحقيقي سحابياً عبر سيرفر Render!"));
     }
 
-    function rejectDepositLive(user) {
-        localStorage.removeItem(`dep_status_${user}`);
-        alert("✕ تم رفض طلب الإيداع الوهمي بنجاح.");
+    function rejectDepositRender(user) {
+        fetch(`${RENDER_SERVER}/admin/reject-deposit`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: user })
+        });
     }
 
-    function approveWithdrawLive(user) {
-        const currentBal = parseFloat(localStorage.getItem(`balance_${user}`) || 0);
-        const witAmt = parseFloat(localStorage.getItem(`wit_amt_${user}`) || 0);
-        
-        localStorage.setItem(`balance_${user}`, currentBal - witAmt);
-        localStorage.setItem(`wit_status_${user}`, "approved");
-        alert("✓ تم الموافقة على السحب وتحديث السيرفر المالي حياً.");
-    }
-
-    function rejectWithdrawLive(user) {
-        localStorage.removeItem(`wit_status_${user}`);
-        alert("✕ تم رفض طلب السحب.");
-    }
-
-    // زر الصفقة الذكي: يحسب ويوزع 15% أرباح حقيقية ونسبية للمودعين الحقيقيين فقط عبر السيرفر
-    function executeLiveTradeServer() {
+    function runAdminTradeRender() {
         const pass = document.getElementById("adminPass").value;
         if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
 
-        const u = localStorage.getItem("pending_deposit_user") || "عبد";
-        const currentBal = parseFloat(localStorage.getItem(`balance_${u}`) || 0);
-        
-        if (currentBal === 0) {
-            alert("⚠️ زر الصفقة يعمل فقط مع الحسابات النشطة التي قامت بالإيداع الفعلي ووافقت عليها!");
-            return;
-        }
+        // إصدار أمر الصفقة للسيرفر لتوزيع الـ 15% على المودعين الحقيقيين
+        fetch(`${RENDER_SERVER}/admin/run-trade-button`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert(`🔥 نجاح تشغيل الصفقة الحية وسيرفر Render قام بتوزيع أرباح الـ 15% للمودعين فقط بنجاح!`);
+        });
+    }
 
-        // الحسبة الرياضية الحقيقية للـ 15%
-        const profit = currentBal * 0.15;
-        localStorage.setItem(`balance_${u}`, currentBal + profit);
-        localStorage.setItem(`trade_${u}`, "true");
+    function approveWithdrawRender(user) {
+        fetch(`${RENDER_SERVER}/admin/approve-withdraw`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: user })
+        }).then(() => alert("✓ تم تفعيل السحب بنجاح وخصمه من رصيد السيرفر حياً."));
+    }
 
-        // إرسال الإشارة للسيرفر الحي على Render لتنفيذ التوزيع العالمي
-        fetch(`${SERVER_URL}/admin/run-trade-button`, { method: 'POST' })
-        .then(() => {
-            alert(`🔥 نجاح التفعيل التلقائي الحقيقي!\nتم حساب أرباح الـ 15% حلياً للمودع فقط، وأصبح رصيده الجديد: \$${(currentBal + profit).toFixed(2)}`);
-        }).catch(() => {
-            alert(`🔥 نجاح التفعيل التلقائي الحقيقي!\nتم حساب أرباح الـ 15% حلياً للمودع فقط، وأصبح رصيده الجديد: \$${(currentBal + profit).toFixed(2)}`);
+    function rejectWithdrawRender(user) {
+        fetch(`${RENDER_SERVER}/admin/reject-withdraw`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: user })
         });
     }
 </script>
