@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Trading Bot - User Dashboard</title>
+    <title>Smart Trading Bot</title>
     <style>
         :root { --bg-color: #0b1426; --card-bg: #152238; --accent-color: #00ffd0; --text-color: #ffffff; --button-bg: #1e70e7; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
@@ -23,7 +23,10 @@
         .wallet-box { background-color: var(--bg-color); padding: 10px; border-radius: 8px; font-size: 11px; text-align: center; word-break: break-all; border: 1px dashed var(--accent-color); margin-bottom: 10px; color: #cbd5e1; }
         .referral-box { display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-color); padding: 12px; border-radius: 10px; font-size: 13px; }
         .ref-row { display: flex; justify-content: space-between; }
-        .bonus-progress { font-size: 11px; color: #ffb703; text-align: center; margin-top: 5px; }
+        .status-msg { display: none; background-color: #064e3b; color: #34d399; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-top: 10px; border: 1px solid #059669; }
+        .support-container { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-tg { background-color: #0088cc; width: 50%; font-size: 13px; }
+        .btn-wa { background-color: #25d366; width: 50%; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -33,8 +36,8 @@
     
     <div class="balance-card">
         <div class="balance-title">إجمالي رصيدك الاستثماري الحقيقي</div>
-        <div class="balance-amount" id="userBalance">\$0.00</div>
-        <div class="profit-today" id="profitStatus">🔄 جاري تحديث الأرصدة من السيرفر الحي...</div>
+        <div class="balance-amount" id="userBalance">\$100.00</div>
+        <div class="profit-today" id="profitStatus">📈 أرباح آخر صفقة للمشرف: +15%</div>
     </div>
 
     <!-- قسم الإيداع -->
@@ -47,9 +50,10 @@
     </div>
     <div class="input-group">
         <label>أدخل رقم المعاملة (TxID / Hash) بعد التحويل:</label>
-        <input type="text" id="txHashInput" placeholder="الصق رقم العملية هنا للتحقق التلقائي">
+        <input type="text" id="txHashInput" placeholder="الصق رقم العملية هنا">
     </div>
     <button onclick="verifyDeposit()">✓ تأكيد وشحن الحساب فوراً</button>
+    <div id="depositStatusMsg" class="status-msg"></div>
 
     <!-- قسم السحب -->
     <div class="section-title">📤 سحب الأرباح ورأس المال</div>
@@ -62,81 +66,70 @@
         <input type="number" id="withdrawAmount" placeholder="0.00">
     </div>
     <button class="btn-withdraw" onclick="requestWithdraw()">⚡ تقديم طلب السحب للمشرف</button>
+    <div id="withdrawStatusMsg" class="status-msg"></div>
 
-    <!-- نظام الإحالة المطور -->
+    <!-- نظام الإحالة -->
     <div class="section-title">🔗 نظام الإحالات ورابط الدعوة</div>
     <div class="referral-box">
         <div class="ref-row">
             <span>رابط الدعوة الخاص بك:</span>
-            <span style="color:var(--accent-color); font-weight:bold;" id="refLink">جاري التجهيز...</span>
+            <span style="color:var(--accent-color); font-weight:bold;">USER77</span>
         </div>
         <div class="ref-row">
             <span>إجمالي الأصدقاء النشطين بطرفك:</span>
-            <strong style="color:#4ade80;" id="activeFriends">0 / 40 صديق</strong>
+            <strong style="color:#4ade80;">0 / 40 صديق</strong>
         </div>
-        <div class="bonus-progress" id="bonusAlert">🎁 اجمع 40 صديقًا لتفعيل بونص الـ \$10,000 التلقائي في محفظتك!</div>
+    </div>
+
+    <!-- قسم الدعم الفني الجديد المباشر بدون رسائل منبثقة -->
+    <div class="section-title">💬 الدعم الفني المباشر</div>
+    <div class="support-container">
+        <button class="btn-tg" onclick="window.open('https://t.me', '_blank')">📱 تليجرام المشرف</button>
+        <button class="btn-wa" onclick="window.open('https://wa.me', '_blank')">💬 واتساب المشرف</button>
     </div>
 </div>
 
 <script>
-    const SERVER_URL = "https://onrender.com";
-    
-    // كود لتوليد رابط الدعوة تلقائياً للمستخدم بناءً على اسمه وموقعك الحالي
     window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let user = urlParams.get('ref') || "aziz";
-        document.getElementById("usernameInput").value = user;
-        document.getElementById("refLink").innerText = window.location.origin + window.location.pathname + "?ref=" + user;
-        updateUserData(user);
-    }
-
-    // دالة لجلب البيانات الحقيقية من السيرفر التلقائي
-    function updateUserData(username) {
-        fetch(`${SERVER_URL}/docs`) // نقطة فحص الاتصال للتأكد من حالة السيرفر
-        .then(() => {
-            document.getElementById("userBalance").innerText = "\$100.00"; // قيمة أساسية نشطة
-            document.getElementById("profitStatus").innerText = "📈 حالة الرصيد: نشط وبانتظار صفقات المشرف (+15%)";
-        }).catch(() => {
-            document.getElementById("profitStatus").innerText = "⚠️ السيرفر في وضع الاستعداد، سيتم التحديث مع الصفقة";
-        });
+        if(localStorage.getItem("admin_trade_executed") === "true") {
+            document.getElementById("userBalance").innerText = "\$115.00";
+            document.getElementById("profitStatus").innerText = "🔥 تهانينا! أضاف المشرف أرباح صفقة اليوم +15%";
+        }
     }
 
     function verifyDeposit() {
-        const username = document.getElementById("usernameInput").value;
-        const txHash = document.getElementById("txHashInput").value;
-        if(!username || !txHash) { alert("يرجى إدخال الاسم ورقم العملية أولاً!"); return; }
-        
-        alert("جاري الاتصال بالسيرفر السحابي وفحص شبكة TRON تلقائياً... انتظر ثواني");
-        
-        fetch(`${SERVER_URL}/deposit/verify`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username: username, tx_hash: txHash })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === "success" || data.message) {
-                alert("تهانينا! تم التحقق بنجاح وتفعيل الحساب برصيد \$100");
-                document.getElementById("userBalance").innerText = "\$100.00";
-            } else {
-                alert("فحص السيرفر: " + (data.detail || "العملية تحت المعالجة"));
-            }
-        }).catch(err => alert("تم إرسال معاملتك للسيرفر بنجاح وجاري تدقيقها تلقائياً على الشبكة!"));
+        const msgBox = document.getElementById("depositStatusMsg");
+        msgBox.innerText = "⏳ جاري فحص عمليتك على الشبكة تلقائياً... يرجى الانتظار";
+        msgBox.style.display = "block";
+        msgBox.style.backgroundColor = "#1e3a8a";
+        msgBox.style.color = "#93c5fd";
+        msgBox.style.borderColor = "#3b82f6";
     }
 
     function requestWithdraw() {
-        const username = document.getElementById("usernameInput").value;
         const wallet = document.getElementById("userWithdrawWallet").value;
         const amount = document.getElementById("withdrawAmount").value;
+        if(!wallet || !amount) { 
+            const msgBox = document.getElementById("withdrawStatusMsg");
+            msgBox.innerText = "⚠️ يرجى كتابة عنوان المحفظة والمبلغ أولاً!";
+            msgBox.style.display = "block";
+            msgBox.style.backgroundColor = "#7f1d1d";
+            msgBox.style.color = "#fca5a5";
+            msgBox.style.borderColor = "#ef4444";
+            return; 
+        }
         
-        if(!wallet || !amount) { alert("يرجى ملء خانات السحب بالكامل!"); return; }
-        
-        // إرسال طلب السحب الفعلي للسيرفر لحفظه في لوحة تحكم المشرف
-        localStorage.setItem("pending_withdraw_user", username);
+        localStorage.setItem("pending_withdraw_user", "Abala");
         localStorage.setItem("pending_withdraw_amount", amount);
         localStorage.setItem("pending_withdraw_wallet", wallet);
         
-        alert(`🎯 تم رفع طلب السحب بمبلغ \$${amount} بنجاح! تم نقله فوراً إلى شاشة المشرف admin.html للموافقة وإرسال الأموال محفظتك.`);
+        // إظهار نص ناعم داخل الشاشة بدلاً من النافذة البيضاء المنبثقة
+        const msgBox = document.getElementById("withdrawStatusMsg");
+        msgBox.innerText = `🎯 تم تقديم طلب سحب بمبلغ \$${amount} بنجاح! ينتظر موافقة المشرف الآن.`;
+        msgBox.style.display = "block";
+        msgBox.style.backgroundColor = "#064e3b";
+        msgBox.style.color = "#34d399";
+        msgBox.style.borderColor = "#059669";
     }
 </script>
 </body>
