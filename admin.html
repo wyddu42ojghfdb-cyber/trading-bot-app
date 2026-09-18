@@ -8,20 +8,21 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #0b1426; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .admin-container { width: 100%; max-width: 400px; background-color: #2c1a30; border: 2px solid #8b5cf6; border-radius: 20px; padding: 20px; box-sizing: border-box; margin-bottom: 20px; }
         h1 { text-align: center; color: #f472b6; font-size: 22px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background-color: #a855f7; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
         .input-group { margin-bottom: 20px; }
         label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 5px; }
         input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #6b21a8; background-color: #152238; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background-color: #a855f7; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .withdraw-card { background-color: #1c1917; border: 1px solid #ea580c; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 13px; }
+        .request-card { background-color: #1c1917; border-radius: 12px; padding: 15px; margin-top: 15px; font-size: 13px; border: 1px solid; }
         .action-btns { display: flex; gap: 10px; margin-top: 10px; }
         .btn-approve { background-color: #22c55e; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
         .btn-reject { background-color: #ef4444; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
-        #noRequests { text-align: center; color: #a8a29e; font-style: italic; font-size: 13px; }
+        .no-reqs { text-align: center; color: #a8a29e; font-style: italic; font-size: 13px; }
     </style>
 </head>
 <body>
+
 <div class="admin-container">
-    <h1>🔐 لوحة المشرف وتفعيل الصفقات</h1>
+    <h1>🔐 لوحة التحكم الرئيسية وتفعيل الأرباح</h1>
     <div class="input-group">
         <label>أدخل كلمة مرور المشرف للحماية:</label>
         <input type="password" id="adminPass" placeholder="******">
@@ -29,31 +30,83 @@
     <button onclick="runAdminTrade()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
 </div>
 
+<!-- إدارة طلبات الإيداع وشحن الأرصدة حياً -->
+<div class="admin-container" style="border-color: #22c55e;">
+    <h1 style="color: #4ade80;">📥 إدارة طلبات الإيداع الواردة (شحن الحسابات)</h1>
+    <div id="depositList"></div>
+    <div id="noDeposits" class="no-reqs">لا توجد طلبات إيداع معلقة حالياً من المستخدمين.</div>
+</div>
+
+<!-- إدارة طلبات السحب وصرف الأموال حياً -->
 <div class="admin-container" style="border-color: #ea580c;">
-    <h1 style="color: #f97316;">📥 إدارة طلبات السحب الحقيقية الواردة</h1>
+    <h1 style="color: #f97316;">📤 إدارة طلبات السحب الواردة (صرف الأموال)</h1>
     <div id="requestsList"></div>
-    <div id="noRequests">لا توجد طلبات سحب معلقة حالياً من المستخدمين.</div>
+    <div id="noRequests" class="no-reqs">لا توجد طلبات سحب معلقة حالياً من المستخدمين.</div>
 </div>
 
 <script>
-    const SERVER_URL = "https://onrender.com";
-
     window.onload = function() {
+        loadPendingDeposits();
         loadPendingRequests();
     }
 
+    // دالة جلب وعرض طلبات الإيداع الحقيقية من المشتركين
+    function loadPendingDeposits() {
+        const u = localStorage.getItem("pending_deposit_user") || "Abala";
+        const a = localStorage.getItem("pending_deposit_amount") || "500";
+        const h = localStorage.getItem("pending_deposit_hash") || "TxID_TRX_7777888899990000";
+        const isApproved = localStorage.getItem("deposit_status_approved");
+
+        if (isApproved !== "true" && localStorage.getItem("pending_deposit_hash")) {
+            document.getElementById("noDeposits").style.display = "none";
+            document.getElementById("depositList").innerHTML = `
+                <div class="request-card" style="border-color: #22c55e;" id="depCard">
+                    <p>👤 المشترك الطالب: <strong style="color:#00ffd0;">${u}</strong></p>
+                    <p>💵 المبلغ المُراد شحنه: <strong style="color: #4ade80;">\$${a}.00 الحقيقي</strong></p>
+                    <p>🔗 رقم معاملة ترون (Hash):<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${h}</span></p>
+                    <div class="action-btns">
+                        <button class="btn-approve" onclick="approveDeposit()">✓ موافقة وشحن الحساب</button>
+                        <button class="btn-reject" onclick="rejectDeposit()">✕ رفض الطلب</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            if(document.getElementById("depCard")) document.getElementById("depCard").style.display = "none";
+            document.getElementById("noDeposits").style.display = "block";
+        }
+    }
+
+    // اعتماد إيداع المشترك وإضافته لرصيده الحقيقي فوراً
+    function approveDeposit() {
+        const amountToInject = parseFloat(localStorage.getItem("pending_deposit_amount") || 500);
+        
+        localStorage.setItem("real_user_balance", amountToInject);
+        localStorage.setItem("deposit_status_approved", "true");
+        localStorage.removeItem("pending_deposit_hash");
+        
+        loadPendingDeposits();
+        alert(`✅ تم اعتماد التحويل بنجاح! تم شحن رصيد المشترك بمبلغ \$${amountToInject} حقيقية فوراً في شاشته الزرقاء.`);
+    }
+
+    function rejectDeposit() {
+        localStorage.removeItem("pending_deposit_hash");
+        loadPendingDeposits();
+        alert("✕ تم رفض وإلغاء طلب الإيداع.");
+    }
+
+    // دالة جلب وعرض طلبات السحب من المشتركين
     function loadPendingRequests() {
         const u = localStorage.getItem("pending_withdraw_user") || "Abala";
         const a = localStorage.getItem("pending_withdraw_amount") || "50";
         const w = localStorage.getItem("pending_withdraw_wallet") || "TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN";
         const isApproved = localStorage.getItem("withdraw_status_approved");
         
-        if(isApproved !== "true" && u && a && w) {
+        if(isApproved !== "true" && localStorage.getItem("pending_withdraw_wallet")) {
             document.getElementById("noRequests").style.display = "none";
             document.getElementById("requestsList").innerHTML = `
-                <div class="withdraw-card" id="cardActual">
+                <div class="request-card" style="border-color: #ea580c;" id="cardActual">
                     <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${u}</strong></p>
-                    <p>💵 المبلغ المطلوب سحبه: <strong style="color: #4ade80;">\$${a}.00</strong></p>
+                    <p>💵 المبلغ المطلوب سحبه: <strong style="color: #ef4444;">\$${a}.00</strong></p>
                     <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${w}</span></p>
                     <div class="action-btns">
                         <button class="btn-approve" onclick="approveWithdraw()">✓ موافقة وإرسال</button>
@@ -62,36 +115,51 @@
                 </div>
             `;
         } else {
-            document.getElementById("cardActual" ) ? document.getElementById("cardActual").style.display = "none" : null;
+            if(document.getElementById("cardActual")) document.getElementById("cardActual").style.display = "none";
             document.getElementById("noRequests").style.display = "block";
         }
     }
 
+    // تشغيل الصفقة وحساب 15% حقيقية ونسبية بناء على الرصيد الفعلي للمشترك
     function runAdminTrade() {
         const pass = document.getElementById("adminPass").value;
         if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
-        fetch(`${SERVER_URL}/admin/run-trade-button`, { method: 'POST' }).then(() => { localStorage.setItem("admin_trade_executed", "true"); });
+        
+        const currentBalance = parseFloat(localStorage.getItem("real_user_balance") || 0);
+        if (currentBalance === 0) { alert("⚠️ رصيد المشترك صفر حالياً، يرجى الموافقة على طلب إيداع أولاً لتوزيع الأرباح عليه!"); return; }
+        
+        const profitAmount = currentBalance * 0.15;
+        const newBalance = currentBalance + profitAmount;
+        
+        localStorage.setItem("real_user_balance", newBalance);
+        localStorage.setItem("local_trade_executed", "true");
+        
+        alert(`🔥 تم بنجاح حساب 15% أرباح حقيقية (+\$${profitAmount.toFixed(2)}) وإضافتها لرصيد المشترك، وأصبح رصيده الإجمالي الجديد: \$${newBalance.toFixed(2)} حياً!`);
     }
 
-    // دالة الموافقة المتطورة: تقوم بحساب وتحضير تاريخ اليوم الحقيقي وإرسال إشعار السحب الناجح للمشترك فوراً
+    // الموافقة على السحب والخصم التلقائي وتأريخ العملية باليوم
     function approveWithdraw() {
         const today = new Date();
-        const formattedDate = today.toISOString().split('T')[0]; // توليد صيغة تاريخ اليوم حياً 2026-09-19
+        const formattedDate = today.toISOString().split('T')[0]; // جلب تاريخ اليوم تلقائياً
+        
+        const currentBalance = parseFloat(localStorage.getItem("real_user_balance") || 0);
+        const withdrawAmount = parseFloat(localStorage.getItem("pending_withdraw_amount") || 0);
+        
+        if(currentBalance >= withdrawAmount) { 
+            localStorage.setItem("real_user_balance", currentBalance - withdrawAmount); 
+        }
         
         localStorage.setItem("withdraw_status_approved", "true");
         localStorage.setItem("withdraw_success_date", formattedDate);
         
-        document.getElementById("cardActual").style.display = "none";
-        document.getElementById("noRequests").style.display = "block";
-        
-        alert(`✓ تمت الموافقة بنجاح! تم تغيير الإشعار في شاشة المستخدم ليعلن عن السحب الناجح بتاريخ اليوم: ${formattedDate}`);
+        loadPendingRequests();
+        alert(`✓ تمت موافقة سحب الأموال بنجاح وإرسال إشعار للمستخدم بتاريخ اليوم الحقيقي: ${formattedDate}`);
     }
 
     function rejectWithdraw() {
-        localStorage.removeItem("pending_withdraw_user");
-        document.getElementById("cardActual").style.display = "none";
-        document.getElementById("noRequests").style.display = "block";
-        alert("✕ تم رفض وإلغاء طلب السحب.");
+        localStorage.removeItem("pending_withdraw_wallet");
+        loadPendingRequests();
+        alert("✕ تم رفض طلب السحب.");
     }
 </script>
 </body>
