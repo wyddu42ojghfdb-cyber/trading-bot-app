@@ -1,56 +1,15 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ana Kontrol Paneli ve Kar Aktivasyonu</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #0b1426; color: #ffffff; margin: 0; padding: 15px; text-align: center; }
-        .card { background: #152238; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 25px; border: 1px solid #2d3d5a; }
-        .purple-card { border-left: 5px solid #a855f7; }
-        .green-card { border-left: 5px solid #22c55e; }
-        .orange-card { border-left: 5px solid #f97316; }
-        h2 { color: #00ffd0; font-size: 18px; margin-bottom: 15px; text-align: right; direction: rtl; }
-        p { color: #94a3b8; font-size: 14px; text-align: right; direction: rtl; }
-        input, button { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #2d3d5a; font-size: 16px; background-color: #0b1426; color: #fff; text-align: center; }
-        button { background-color: #1e70e7; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { opacity: 0.9; }
-    </style>
-</head>
-<body>
+        // 🌐 الربط المباشر الموثوق بسيرفر الـ Render الحي الخاص بك لتبادل البيانات
+        const SERVER_URL = "https://onrender.com";
 
-    <!-- 1. قسم تفعيل الأرباح اليومية بنسبة 15% -->
-    <div class="card purple-card">
-        <h2>🔐 لوحة التحكم الرئيسية وتفعيل الأرباح اليومية</h2>
-        <p>قم بالضغط على الزر أدناه لتوزيع الأرباح الحية:</p>
-        <button id="sihirli-buton">🚀 تفعيل أرباح اليوم وتوزيع نسبة +15% تلقائياً للمستثمرين</button>
-    </div>
-
-    <!-- 2. قسم إدارة طلبات الإيداع الواردة -->
-    <div class="card green-card">
-        <h2>📩 إدارة طلبات إيداع رأس المال الواردة (شحن الرصيد)</h2>
-        <div id="ideac-listesi">
-            <p>لا توجد طلبات إيداع معلقة حالياً من المستخدمين.</p>
-        </div>
-    </div>
-
-    <!-- 3. قسم إدارة طلبات السحب الواردة -->
-    <div class="card orange-card">
-        <h2>📤 إدارة طلبات سحب الأرباح ورأس المال الواردة</h2>
-        <div id="cekme-listesi">
-            <p>لا توجد طلبات سحب معلقة حالياً من المستخدمين.</p>
-        </div>
-    </div>
-
-    <!-- كود الربط والـ JavaScript السحابي الفعلي -->
-    <script>
-        // 🌐 ربط مباشر وصحيح برابط سيرفر الـ Render الخاص بك
-        const SERVER_URL = "https://my-trading-bot-k7ft.onrender.com";
-
-        // دالة جلب الطلبات الواردة حياً وتحديث الجداول كل 4 ثوانٍ تلقائياً عبر المسار الصحيح المفتوح في سيرفرك
+        // تحديث دالة جلب الطلبات لقراءة وتمرير البيانات المباشرة دون حظر
         async function talepleriGetir() {
             try {
-                const response = await fetch(`${SERVER_URL}/api/yonetici/talepler`, { method: "POST" });
+                // إضافة مسار التوثيق لضمان جلب مصفوفة المعاملات مباشرة
+                const response = await fetch(`${SERVER_URL}/api/yonetici/talepler`, { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                
                 if (response.ok) {
                     const data = await response.json();
                     
@@ -87,45 +46,4 @@
                 console.error("Veri çekme hatası:", error); 
             }
         }
-
-        // دالة تفعيل زر التداول لتوزيع أرباح الـ 15% حياً
-        async function sihirliButonAktifEt() {
-            try {
-                const response = await fetch(`${SERVER_URL}/admin/run-trade-button`, { method: "POST" });
-                if (response.ok) { 
-                    alert("🚀 تم بنجاح! تم حساب وتوزيع أرباح الـ 15% لجميع الحسابات النشطة حياً عبر السيرفر الجديد."); 
-                    talepleriGetir();
-                } else {
-                    alert("فشلت العملية، تأكد من اتصال السيرفر.");
-                }
-            } catch (error) { 
-                alert("خطأ في الاتصال، لم يتم الوصول للسيرفر."); 
-            }
-        }
-
-        // دالة الموافقة على طلب إيداع مستخدم معين لتحويل رصيده المعلق إلى رصيد حقيقي معتمد
-        async function yatirmaOnayla(user) {
-            try {
-                const response = await fetch(`${SERVER_URL}/api/yonetici/yatirma_onayla?username=${user}`, { method: "POST" });
-                if (response.ok) {
-                    alert(`✓ تم اعتماد شحن حساب المستخدم (${user}) بنجاح!`);
-                    talepleriGetir(); 
-                }
-            } catch(e){
-                alert("فشلت عملية الاعتماد.");
-            }
-        }
-
-        // فحص وتحديث شاشة المشرف تلقائياً حياً كل 4 ثوانٍ
-        setInterval(talepleriGetir, 4000);
-
-        // ربط زر الأرباح بالوظيفة البرمجية عند النقر عند تحميل الصفحة
-        document.addEventListener("DOMContentLoaded", () => {
-            const btn = document.getElementById('sihirli-buton');
-            if(btn) btn.addEventListener("click", sihirliButonAktifEt);
-            // تشغيل الجلب الفوري للطلبات عند فتح اللوحة لأول مرة
-            talepleriGetir();
-        });
-    </script>
-</body>
-</html>
+        
