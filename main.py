@@ -1,16 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 import sqlite3
-import requests
 
 app = FastAPI(title="TRC20-USDT Trading Control System")
 
-# 🔓 تفعيل الـ CORS لكي يوافق السيرفر على استقبال طلبات موقع الـ github.io الخاص بك فوراً
+# 🔓 حل مشكلة الحظر وتفعيل استقبال طلبات واجهة المستخدم والمشرف من github.io
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,15 +32,17 @@ def init_db():
         has_received_bonus INTEGER DEFAULT 0
     )
     """)
-    # إضافة جدول معلقات الإيداع والسحب لدعم لوحة التحكم لديك
+    # إنشاء جدول حفظ الحالات المترابط مع واجهة تطبيقك الرسومية
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS manual_actions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        action_type TEXT, -- 'yatirma' أو 'cekme'
-        amount REAL,
-        wallet TEXT,
-        status TEXT DEFAULT 'Bekliyor'
+    CREATE TABLE IF NOT EXISTS system_status (
+        username TEXT PRIMARY KEY,
+        balance REAL DEFAULT 0.0,
+        trade_executed INTEGER DEFAULT 0,
+        deposit_status TEXT DEFAULT 'none',
+        pending_deposit REAL DEFAULT 0.0,
+        withdraw_status TEXT DEFAULT 'none',
+        pending_withdraw REAL DEFAULT 0.0,
+        withdraw_wallet TEXT
     )""")
     conn.commit()
     conn.close()
@@ -53,16 +54,16 @@ class UserRegister(BaseModel):
     user_wallet: str
     referred_by: Optional[str] = None
 
-class VerifyDepositRequest(BaseModel):
-    username: str
-    tx_hash: str
-
-class ManualActionRequest(BaseModel):
+class DepositRequestData(BaseModel):
     username: str
     amount: float
-    wallet: Optional[str] = None
 
-class AdminAction(BaseModel):
+class WithdrawRequestData(BaseModel):
+    username: str
+    wallet: str
+    amount: float
+
+class AdminActionData(BaseModel):
     secret_code: str
 
 # ---- 1. تسجيل مستخدم جديد ----
@@ -78,6 +79,10 @@ def register_user(user: UserRegister):
             "INSERT INTO users (username, user_wallet, referred_by) VALUES (?, ?, ?)",
             (user.username, user.user_wallet, user.referred_by)
         )
+        cursor.execute(
+            "INSERT OR IGNORE INTO system_status (username, balance) VALUES (?, 0.0)",
+            (user.username,)
+        )
         conn.commit()
         return {"message": f"تم تسجيل {user.username} وربط محفظته بنجاح!"}
     except sqlite3.IntegrityError:
@@ -85,91 +90,91 @@ def register_user(user: UserRegister):
     finally:
         conn.close()
 
-# مسار إضافي لجلب رصيد المستخدم لواجهة الهاتف لكي لا يظهر 0.00$ دائماً
-@app.get("/api/bakiye/{username}")
-def get_user_balance(username: str):
-    conn = sqlite3.connect("trading_app.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT balance FROM users WHERE username = ?", (username,))
-    res = cursor.fetchone()
-    conn.close()
-    return {"bakiye": res[0] if res else 0.0}
-
-# ---- 2. الفحص التلقائي للإيداع عبر شبكة TRON ----
-@app.post("/deposit/verify")
-def verify_deposit(req: VerifyDepositRequest):
-    try:
-        url = f"https://trongrid.io"
-        # يمكنك هنا ربط فحص الـ API الحقيقي مستقبلاً، سنبقي الهيكلية كما هي لتحديث الرصيد
-        amount_sent = 100.0 
-        
-        if amount_sent < 100.0:
-            raise HTTPException(status_code=400, detail=f"التحويل المكتشف قيمته {amount_sent}$، والحد الأدنى هو 100$")
-            
-        conn = sqlite3.connect("trading_app.db")
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET balance = balance + ?, is_active = 1 WHERE username = ?", (amount_sent, req.username))
-        conn.commit()
-        conn.close()
-        return {"status": "success", "message": f"رائع! تم تأكيد إيداع {amount_sent}$ USDT بنجاح وتفعيل الحساب تلقائياً."}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="فشل الفحص، يرجى التأكد من رقم المعاملة")
-
-# ---- 3. مسارات إرسال طلبات الإيداع والسحب اليدوية لتظهر في لوحة المشرف ----
-@app.post("/api/para_yatir")
-def manual_deposit(req: ManualActionRequest):
-    conn = sqlite3.connect("trading_app.db")
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO manual_actions (username, action_type, amount, status) VALUES (?, 'yatirma', ?, 'Bekliyor')", (req.username, req.amount))
-    conn.commit()
-    conn.close()
-    return {"message": "Yatırım talebi iletildi, yetkili onayı bekleniyor."}
-
-@app.post("/api/para_cek")
-def manual_withdrawal(req: ManualActionRequest):
-    conn = sqlite3.connect("trading_app.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT balance FROM users WHERE username = ?", (req.username,))
-    res = cursor.fetchone()
-    if not res or res[0] < req.amount:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Yetersiz bakiye!")
-    cursor.execute("INSERT INTO manual_actions (username, action_type, amount, wallet, status) VALUES (?, 'cekme', ?, ?, 'Bekliyor')", (req.username, req.amount, req.wallet))
-    conn.commit()
-    conn.close()
-    return {"message": "Çekim talebi danışmana iletildi."}
-
-# ---- 4. مسار جلب الطلبات المعلقة للوحة التحكم (البطاقة الخضراء والبرتقالية) ----
-@app.post("/api/yonetici/talepler")
-def get_admin_demands(req: AdminAction):
-    # يمكنك وضع كلمة المرور التي تناسب لوحتك هنا
+# ---- 2. الدالة المسؤولة عن جلب الحالات والتحديث التلقائي لواجهة هاتف المستخدم ----
+@app.get("/user/status")
+def get_user_status(username: str):
     conn = sqlite3.connect("trading_app.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT id, username as kullanici, amount as miktar FROM manual_actions WHERE action_type='yatirma' AND status='Bekliyor'")
+    cursor.execute("SELECT * FROM system_status WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    
+    if not row:
+        # إذا لم يكن مسجلاً، نقوم بإنشاء سجل فارغ له لضمان عدم توقف الواجهة
+        cursor.execute("INSERT OR IGNORE INTO system_status (username) VALUES (?)", (username,))
+        conn.commit()
+        cursor.execute("SELECT * FROM system_status WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        
+    res = dict(row)
+    res["trade_executed"] = True if res["trade_executed"] == 1 else False
+    conn.close()
+    return res
+
+# ---- 3. استقبال طلبات الإيداع من واجهة المستخدم وحفظها ----
+@app.post("/deposit/request")
+def deposit_request(req: DepositRequestData):
+    conn = sqlite3.connect("trading_app.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO system_status (username) VALUES (?)", (req.username,))
+    cursor.execute(
+        "UPDATE system_status SET deposit_status = 'pending', pending_deposit = ? WHERE username = ?",
+        (req.amount, req.username)
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+
+# ---- 4. استقبال طلبات السحب من واجهة المستخدم وحفظها ----
+@app.post("/withdraw/request")
+def withdraw_request(req: WithdrawRequestData):
+    conn = sqlite3.connect("trading_app.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM users WHERE username = ?", (req.username,))
+    user_bal = cursor.fetchone()
+    
+    if not user_bal or user_bal[0] < req.amount:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Yetersiz bakiye!")
+        
+    cursor.execute("INSERT OR IGNORE INTO system_status (username) VALUES (?)", (req.username,))
+    cursor.execute(
+        "UPDATE system_status SET withdraw_status = 'pending', pending_withdraw = ?, withdraw_wallet = ? WHERE username = ?",
+        (req.amount, req.wallet, req.username)
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+
+# ---- 5. مسارات جلب التحكم للمشرف للموافقة اليدوية والتلقائية ----
+@app.post("/api/yonetici/talepler")
+def get_admin_demands():
+    conn = sqlite3.connect("trading_app.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT username as kullanici, pending_deposit as miktar FROM system_status WHERE deposit_status='pending'")
     yatirmalar = [dict(row) for row in cursor.fetchall()]
-    cursor.execute("SELECT id, username as kullanici, amount as miktar, wallet as cuzdan FROM manual_actions WHERE action_type='cekme' AND status='Bekliyor'")
+    cursor.execute("SELECT username as kullanici, pending_withdraw as miktar, withdraw_wallet as cuzdan FROM system_status WHERE withdraw_status='pending'")
     cekmeler = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return {"yatirmalar": yatirmalar, "cekmeler": cekmeler}
 
 @app.post("/api/yonetici/yatirma_onayla")
-def approve_manual_deposit(id: int):
+def approve_manual_deposit(username: str):
     conn = sqlite3.connect("trading_app.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT username, amount FROM manual_actions WHERE id = ?", (id,))
-    res = cursor.fetchone()
-    if res:
-        username, amount = res[0], res[1]
-        cursor.execute("UPDATE users SET balance = balance + ?, is_active = 1 WHERE username = ?", (amount, username))
-        cursor.execute("UPDATE manual_actions SET status = 'Onaylandi' WHERE id = ?", (id,))
+    cursor.execute("SELECT pending_deposit FROM system_status WHERE username = ?", (username,))
+    amount = cursor.fetchone()
+    if amount:
+        cursor.execute("UPDATE users SET balance = balance + ?, is_active = 1 WHERE username = ?", (amount[0], username))
+        cursor.execute("UPDATE system_status SET balance = balance + ?, deposit_status = 'approved', pending_deposit = 0 WHERE username = ?", (amount[0], username))
         conn.commit()
     conn.close()
-    return {"message": "Başarıyla onaylandı."}
+    return {"message": "Success"}
 
-# ---- 5. زر المشرف السحري الأصلي الخاص بك: توزيع أرباح الصفقة (15%) ----
+# ---- 6. زر المشرف السحري الخاص بك لتوزيع الأرباح (15%) وعمولات الإحالة ----
 @app.post("/admin/run-trade-button")
-@app.post("/api/yonetici/sihirli_buton") # تم جعله يستقبل مسار اللوحة أيضاً لضمان التشغيل من الزر البنفسجي
+@app.post("/api/yonetici/sihirli_buton")
 def run_trade_button():
     conn = sqlite3.connect("trading_app.db")
     cursor = conn.cursor()
@@ -183,6 +188,10 @@ def run_trade_button():
         profit = balance * 0.15
         new_balance = balance + profit
         updates.append((new_balance, username))
+        
+        # تفعيل إشعار الأرباح الحية على واجهة هاتف المستخدم فوراً
+        cursor.execute("UPDATE system_status SET balance = ?, trade_executed = 1 WHERE username = ?", (new_balance, username))
+        
         if referred_by:
             ref_bonus = profit * 0.20
             referral_rewards[referred_by] = referral_rewards.get(referred_by, 0.0) + ref_bonus
@@ -190,10 +199,11 @@ def run_trade_button():
     cursor.executemany("UPDATE users SET balance = ? WHERE username = ?", updates)
     for referrer, bonus_amount in referral_rewards.items():
         cursor.execute("UPDATE users SET balance = balance + ? WHERE username = ?", (bonus_amount, referrer))
+        cursor.execute("UPDATE system_status SET balance = balance + ? WHERE username = ?", (bonus_amount, referrer))
         
     conn.commit()
     cursor.execute("SELECT COUNT(*) FROM users")
     total_users = cursor.fetchone()[0]
     conn.close()
-    return {"message": "تمت العملية بنجاح! وزعت أرباح 15% ومكافآت الإحالة 20%", "total_users_system": total_users}
+    return {"message": "Success", "total_users_system": total_users}
     
