@@ -67,7 +67,7 @@
 </div>
 
 <script>
-    // 🌐 ربط الواجهة برابط السيرفر وقاعدة البيانات الحية على Render
+    // 🌐 ربط الواجهة برابط السيرفر الحي الفعلي والمصحح على Render لإنهاء مشكلة التوقف
     const RENDER_SERVER = "https://onrender.com";
 
     window.onload = function() {
@@ -84,10 +84,10 @@
         .then(res => res.json())
         .then(data => {
             if(data) {
-                document.getElementById("userBalance").innerText = `\$${parseFloat(data.balance || 0).toFixed(2)}`;
+                document.getElementById("userBalance").innerText = `$${parseFloat(data.balance || 0).toFixed(2)}`;
                 
                 if(data.trade_executed === true) {
-                    document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+\$${(data.balance * 0.15).toFixed(2)})`;
+                    document.getElementById("profitStatus").innerText = `🔥 تم توزيع أرباح اليوم حياً: +15% (+$${(data.balance * 0.15).toFixed(2)})`;
                 }
 
                 // تحديث رسائل الحالات حياً من السيرفر
@@ -96,7 +96,7 @@
                     depBox.innerText = `✅ تم اعتماد الإيداع بنجاح وشحن رصيدك الاستثماري الحقيقي!`;
                     depBox.style.display = "block"; depBox.style.backgroundColor = "#064e3b"; depBox.style.color = "#34d399";
                 } else if(data.deposit_status === "pending") {
-                    depBox.innerText = `⏳ طلب إيداع بمبلغ \$${data.pending_deposit} قيد المراجعة حالياً من المشرف...`;
+                    depBox.innerText = `⏳ طلب إيداع بمبلغ $${data.pending_deposit} قيد المراجعة حالياً من المشرف...`;
                     depBox.style.display = "block"; depBox.style.backgroundColor = "#1e3a8a"; depBox.style.color = "#93c5fd";
                 } else { depBox.style.display = "none"; }
 
@@ -105,7 +105,7 @@
                     witBox.innerText = `✅ تم السحب بنجاح بتاريخ اليوم!\nتم تحويل الأموال لمحفظتك بأمان وتم الخصم.`;
                     witBox.style.display = "block"; witBox.style.backgroundColor = "#064e3b"; witBox.style.color = "#34d399";
                 } else if(data.withdraw_status === "pending") {
-                    witBox.innerText = `⏳ طلب سحب بمبلغ \$${data.pending_withdraw} قيد المعالجة حالياً...`;
+                    witBox.innerText = `⏳ طلب سحب بمبلغ $${data.pending_withdraw} قيد المعالجة حالياً...`;
                     witBox.style.display = "block"; witBox.style.backgroundColor = "#1e3a8a"; witBox.style.color = "#93c5fd";
                 } else { witBox.style.display = "none"; }
             }
