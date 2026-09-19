@@ -6,7 +6,7 @@ import sqlite3
 
 app = FastAPI(title="TRC20-USDT Trading Control System")
 
-# 🔓 تفعيل استقبال الطلبات الخارجية من موقعك على github.io بدون حظر
+# 🔓 تفعيل الـ CORS لحل مشكلة الحظر تماماً
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,16 +19,6 @@ app.add_middleware(
 def init_db():
     conn = sqlite3.connect("trading_app.db")
     cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        user_wallet TEXT,
-        balance REAL DEFAULT 0.0,
-        referred_by TEXT,
-        is_active INTEGER DEFAULT 0
-    )""")
-    # جدول معلقات الإيداع والسحب لربط واجهة المستخدم مع لوحة المشرف
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS system_status (
         username TEXT PRIMARY KEY,
@@ -54,7 +44,7 @@ class WithdrawRequestData(BaseModel):
     wallet: str
     amount: float
 
-# ---- 1. استقبال وفحص حالة المستخدم التلقائية ----
+# ---- 1. جلب حالة رصيد المستخدم تلقائياً ----
 @app.get("/user/status")
 def get_user_status(username: str):
     conn = sqlite3.connect("trading_app.db")
@@ -72,7 +62,7 @@ def get_user_status(username: str):
     conn.close()
     return res
 
-# ---- 2. استقبال طلبات الإيداع من واجهة المستخدم ----
+# ---- 2. استقبال طلبات الإيداع ----
 @app.post("/deposit/request")
 def deposit_request(req: DepositRequestData):
     conn = sqlite3.connect("trading_app.db")
@@ -86,7 +76,7 @@ def deposit_request(req: DepositRequestData):
     conn.close()
     return {"status": "success"}
 
-# ---- 3. استقبال طلبات السحب من واجهة المستخدم ----
+# ---- 3. استقبال طلبات السحب ----
 @app.post("/withdraw/request")
 def withdraw_request(req: WithdrawRequestData):
     conn = sqlite3.connect("trading_app.db")
@@ -100,7 +90,7 @@ def withdraw_request(req: WithdrawRequestData):
     conn.close()
     return {"status": "success"}
 
-# ---- 4. جلب الطلبات المعلقة للوحة تحكم المشرف (admin.html) ----
+# ---- 4. جلب الطلبات المعلقة للوحة تحكم المشرف ----
 @app.post("/api/yonetici/talepler")
 def get_admin_demands():
     conn = sqlite3.connect("trading_app.db")
@@ -113,7 +103,7 @@ def get_admin_demands():
     conn.close()
     return {"yatirmalar": yatirmalar, "cekmeler": cekmeler}
 
-# ---- 5. موافقة المشرف على الإيداع وتحديث رصيد المشترك فورا ----
+# ---- 5. موافقة المشرف على الإيداع وتحديث الرصيد ----
 @app.post("/api/yonetici/yatirma_onayla")
 def approve_manual_deposit(username: str):
     conn = sqlite3.connect("trading_app.db")
@@ -127,9 +117,8 @@ def approve_manual_deposit(username: str):
     conn.close()
     return {"message": "Success"}
 
-# ---- 6. زر الصفقة السحري بنسبة 15% وتوزيع الأرباح حياً ----
+# ---- 6. زر الصفقة السحري بنسبة 15% ----
 @app.post("/api/yonetici/sihirli_buton")
-@app.post("/admin/run-trade-button")
 def run_trade_button():
     conn = sqlite3.connect("trading_app.db")
     cursor = conn.cursor()
