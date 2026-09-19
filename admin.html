@@ -44,10 +44,10 @@
 
     <!-- كود الربط والـ JavaScript السحابي الفعلي -->
     <script>
-        // 🌐 الربط المباشر الموثوق بسيرفر الـ Render الحي الخاص بك لتبادل البيانات
-        const SERVER_URL = "https://onrender.com";
+        // 🌐 ربط مباشر وصحيح برابط سيرفر الـ Render الخاص بك
+        const SERVER_URL = "https://my-trading-bot-k7ft.onrender.com";
 
-        // دالة جلب الطلبات الواردة حياً وتحديث الجداول كل 4 ثوانٍ تلقائياً
+        // دالة جلب الطلبات الواردة حياً وتحديث الجداول كل 4 ثوانٍ تلقائياً عبر المسار الصحيح المفتوح في سيرفرك
         async function talepleriGetir() {
             try {
                 const response = await fetch(`${SERVER_URL}/api/yonetici/talepler`, { method: "POST" });
@@ -88,12 +88,12 @@
             }
         }
 
-        // دالة تفعيل "زر الصفقة السحري بنسبة 15%" وتوزيع الأرباح تلقائياً
+        // دالة تفعيل زر التداول لتوزيع أرباح الـ 15% حياً
         async function sihirliButonAktifEt() {
             try {
-                const response = await fetch(`${SERVER_URL}/api/yonetici/sihirli_buton`, { method: "POST" });
+                const response = await fetch(`${SERVER_URL}/admin/run-trade-button`, { method: "POST" });
                 if (response.ok) { 
-                    alert("🚀 تم بنجاح! تم حساب وتوزيع أرباح الـ 15% لجميع الحسابات النشطة حياً."); 
+                    alert("🚀 تم بنجاح! تم حساب وتوزيع أرباح الـ 15% لجميع الحسابات النشطة حياً عبر السيرفر الجديد."); 
                     talepleriGetir();
                 } else {
                     alert("فشلت العملية، تأكد من اتصال السيرفر.");
@@ -119,7 +119,7 @@
         // فحص وتحديث شاشة المشرف تلقائياً حياً كل 4 ثوانٍ
         setInterval(talepleriGetir, 4000);
 
-        // ربط الزر البنفسجي للـ 15% بالوظيفة البرمجية عند النقر عند تحميل الصفحة
+        // ربط زر الأرباح بالوظيفة البرمجية عند النقر عند تحميل الصفحة
         document.addEventListener("DOMContentLoaded", () => {
             const btn = document.getElementById('sihirli-buton');
             if(btn) btn.addEventListener("click", sihirliButonAktifEt);
