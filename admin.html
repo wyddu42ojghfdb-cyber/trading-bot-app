@@ -1,139 +1,164 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Trading Bot - Admin Hub</title>
+    <title>Ana Kontrol Paneli ve Kar Aktivasyonu</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0b1426; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .admin-container { width: 100%; max-width: 400px; background-color: #2c1a30; border: 2px solid #8b5cf6; border-radius: 20px; padding: 20px; box-sizing: border-box; margin-bottom: 20px; }
-        h1 { text-align: center; color: #f472b6; font-size: 22px; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background-color: #a855f7; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #6b21a8; background-color: #152238; color: white; box-sizing: border-box; }
-        .request-card { background-color: #1c1917; border-radius: 12px; padding: 15px; margin-top: 15px; font-size: 13px; border: 1px solid; }
-        .action-btns { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-approve { background-color: #22c55e; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
-        .btn-reject { background-color: #ef4444; padding: 8px; border-radius: 6px; border: none; color: white; font-weight: bold; width: 50%; cursor: pointer; }
-        .no-reqs { text-align: center; color: #a8a29e; font-style: italic; font-size: 13px; }
+        body { font-family: Arial, sans-serif; background-color: #0f111a; color: #ffffff; margin: 0; padding: 15px; text-align: center; }
+        .card { background: #1a1d29; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 25px; border: 1px solid #2d3248; }
+        .purple-card { border-left: 5px solid #a855f7; }
+        .green-card { border-left: 5px solid #22c55e; }
+        .orange-card { border-left: 5px solid #f97316; }
+        h2 { color: #f3f4f6; font-size: 18px; margin-bottom: 15px; }
+        p { color: #9ca3af; font-size: 14px; }
+        input, button { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #374151; font-size: 16px; background-color: #11131e; color: #fff; text-align: center; }
+        button { background-color: #a855f7; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1>🔐 لوحة التحكم الرئيسية وتفعيل الأرباح</h1>
-    <div class="input-group">
-        <label>أدخل كلمة مرور المشرف للحماية:</label>
-        <input type="password" id="adminPass" placeholder="******">
+    <!-- قسم رمز الحماية وزر التداول السحري 15% -->
+    <div class="card purple-card">
+        <h2>🔐 Ana kontrol paneli ve kar aktivasyonu</h2>
+        <p>Güvenlik için yönetici parolasını girin:</p>
+        <input type="password" id="admin-sifre" placeholder="••••••">
+        <button id="sihirli-buton">🚀 Kampanya devam ediyor ve %15 kar payı canlı olarak dağıtılıyor.</button>
     </div>
-    <button onclick="runAdminTradeRender()">🚀 تشغيل الصفقة وتوزيع أرباح 15% حياً</button>
-</div>
 
-<div class="admin-container" style="border-color: #22c55e;">
-    <h1>📥 إدارة طلبات الإيداع الواردة (شحن الحسابات)</h1>
-    <div id="depositList"></div>
-    <div id="noDeposits" class="no-reqs">لا توجد طلبات إيداع حقيقية معلقة حالياً.</div>
-</div>
+    <!-- قسم طلبات الإيداع الواردة -->
+    <div class="card green-card">
+        <h2>📩 Gelen para yatırma taleplerini (hesap bakiyesi yükleme) yönetme</h2>
+        <div id="ideac-listesi">
+            <p>Şu anda bekleyen herhangi bir gerçek para yatırma talebi bulunmamaktadır.</p>
+        </div>
+    </div>
 
-<div class="admin-container" style="border-color: #ea580c;">
-    <h1>📤 إدارة طلبات السحب الواردة (صرف الأموال)</h1>
-    <div id="requestsList"></div>
-    <div id="noRequests" class="no-reqs">لا توجد طلبات سحب معلقة حالياً.</div>
-</div>
+    <!-- قسم طلبات السحب الواردة -->
+    <div class="card orange-card">
+        <h2>📤 Gelen para çekme taleplerinin yönetimi (fon dağıtımı)</h2>
+        <div id="cekme-listesi">
+            <p>Şu anda bekleyen herhangi bir para çekme talebi bulunmamaktadır.</p>
+        </div>
+    </div>
 
-<script>
-    const RENDER_SERVER = "https://onrender.com";
+    <!-- كود الربط البرمجي للوحة التحكم بالسيرفر الحي القديم والجديد -->
+    <script>
+        // 🌐 رابط سيرفر الـ Render الحي الخاص بك لربط العمليات والموافقة
+        const SERVER_URL = "https://onrender.com";
 
-    window.onload = function() {
-        // الاتصال بالسيرفر وجلب طلبات المستخدمين حياً كل 3 ثوانٍ وتحديث الشاشة
-        setInterval(fetchAdminDataFromRender, 3000);
-    }
+        // دالة لجلب الطلبات الواردة (إيداع وسحب) تلقائياً وعرضها في الجداول
+        async function talepleriGetir() {
+            const sifreInput = document.getElementById('admin-sifre').value;
+            if (!sifreInput) return; // لن يتم جلب البيانات إلا إذا قمت بكتابة كلمة المرور لحماية السيرفر
 
-    function fetchAdminDataFromRender() {
-        fetch(`${RENDER_SERVER}/admin/get-requests`)
-        .then(res => res.json())
-        .then(data => {
-            // عرض طلب الإيداع القادم من السيرفر حياً
-            if(data && data.pending_deposit_user) {
-                document.getElementById("noDeposits").style.display = "none";
-                document.getElementById("depositList").innerHTML = `
-                    <div class="request-card" style="border-color: #22c55e;">
-                        <p>👤 اسم المشترك الطالب: <strong style="color:#00ffd0;">${data.pending_deposit_user}</strong></p>
-                        <p>💵 المبلغ المطلوب إيداعه: <strong style="color: #4ade80;">\$${data.pending_deposit_amount}.00 الحقيقي</strong></p>
-                        <div class="action-btns">
-                            <button class="btn-approve" onclick="approveDepositRender('${data.pending_deposit_user}')">✓ موافقة وشحن الحساب</button>
-                            <button class="btn-reject" onclick="rejectDepositRender('${data.pending_deposit_user}')">✕ رفض الطلب</button>
-                        </div>
-                    </div>`;
-            } else {
-                document.getElementById("noDeposits").style.display = "block";
-                document.getElementById("depositList").innerHTML = "";
+            try {
+                const response = await fetch(`${SERVER_URL}/api/yonetici/talepler`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ secret_code: sifreInput })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 1. تحديث قائمة طلبات الإيداع الواردة (البطاقة الخضراء)
+                    const ideacAlani = document.getElementById('ideac-listesi');
+                    if (data.yatirmalar && data.yatirmalar.length > 0) {
+                        let htmlContent = "<div style='text-align:left; padding:5px;'>";
+                        data.yatirmalar.forEach(talep => {
+                            htmlContent += `<div style="margin: 12px 0; background:#11131e; padding:12px; border-radius:10px; border-left:4px solid #22c55e;">
+                                👤 Kullanıcı: <b>${talep.kullanici}</b> <br> 💰 Miktar: <b>${talep.miktar} USDT</b> <br>
+                                <button onclick="yatirmaOnayla(${talep.id})" style="background:#22c55e; color:white; width:auto; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px;">Onayla (Bakiyeyi Yükle)</button>
+                            </div>`;
+                        });
+                        htmlContent += "</div>";
+                        ideacAlani.innerHTML = htmlContent;
+                    } else {
+                        ideacAlani.innerHTML = "<p>Şu anda bekleyen herhangi bir gerçek para yatırma talebi bulunmamaktadır.</p>";
+                    }
+
+                    // 2. تحديث قائمة طلبات السحب الواردة (البطاقة البرتقالية)
+                    const cekmeAlani = document.getElementById('cekme-listesi');
+                    if (data.cekmeler && data.cekmeler.length > 0) {
+                        let htmlContent = "<div style='text-align:left; padding:5px;'>";
+                        data.cekmeler.forEach(talep => {
+                            htmlContent += `<div style="margin: 12px 0; background:#11131e; padding:12px; border-radius:10px; border-left:4px solid #f97316;">
+                                👤 Kullanıcı: <b>${talep.kullanici}</b> <br> 💸 Miktar: <b>${talep.miktar} USDT</b> <br>
+                                🔑 Cüzdan: <span style="font-size:12px; color:#9ca3af; word-break:break-all;">${talep.cuzdan}</span> <br>
+                                <button onclick="cekmeOnayla(${talep.id})" style="background:#f97316; color:white; width:auto; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px;">Ödemeyi Onayla (Sistemden Düş)</button>
+                            </div>`;
+                        });
+                        htmlContent += "</div>";
+                        cekmeAlani.innerHTML = htmlContent;
+                    } else {
+                        cekmeAlani.innerHTML = "<p>Şu anda bekleyen herhangi bir para çekme talebi bulunmamaktadır.</p>";
+                    }
+                }
+            } catch (error) {
+                console.error("Veri çekme hatası:", error);
+            }
+        }
+
+        // دالة تفعيل "زر الصفقة السحري بنسبة 15%" وتوزيع عمولات الإحالة 20% تلقائياً
+        async function sihirliButonAktifEt() {
+            const sifreInput = document.getElementById('admin-sifre').value;
+            if (!sifreInput) {
+                alert("Lütfen önce yönetici parolasını giriniz!");
+                return;
             }
 
-            // عرض طلب السحب القادم من السيرفر حياً
-            if(data && data.pending_withdraw_user) {
-                document.getElementById("noRequests").style.display = "none";
-                document.getElementById("requestsList").innerHTML = `
-                    <div class="request-card" style="border-color: #ea580c;">
-                        <p>👤 اسم المستخدم: <strong style="color:#00ffd0;">${data.pending_withdraw_user}</strong></p>
-                        <p>💵 المبلغ المطلوب سحبه: <strong style="color: #ef4444;">\$${data.pending_withdraw_amount}.00</strong></p>
-                        <p>💼 محفظة المستلم المستهدفة:<br><span style="color:#e2e8f0; font-size:11px; word-break:break-all;">${data.pending_withdraw_wallet}</span></p>
-                        <div class="action-btns">
-                            <button class="btn-approve" onclick="approveWithdrawRender('${data.pending_withdraw_user}')">✓ موافقة وإرسال</button>
-                            <button class="btn-reject" onclick="rejectWithdrawRender('${data.pending_withdraw_user}')">✕ رفض وإلغاء</button>
-                        </div>
-                    </div>`;
-            } else {
-                document.getElementById("noRequests").style.display = "block";
-                document.getElementById("requestsList").innerHTML = "";
+            try {
+                const response = await fetch(`${SERVER_URL}/api/yonetici/sihirli_buton`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ secret_code: sifreInput })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("🚀 Başarılı: Tüm aktif kullanıcılara %15 kâr ve davet edenlere %20 bonus dağıtıldı!");
+                    talepleriGetir(); 
+                } else {
+                    alert("Hata: " + (data.detail || "Şifre yanlış veya işlem başarısız."));
+                }
+            } catch (error) {
+                alert("Bağlantı hatası: Sunucuya ulaşılamadı.");
+            }
+        }
+
+        // دالة الموافقة على طلب إيداع مستخدم معين لتحويل رصيده إلى رصيد حقيقي معتمد داخل التطبيق
+        async function yatirmaOnayla(talepId) {
+            const sifreInput = document.getElementById('admin-sifre').value;
+            try {
+                const response = await fetch(`${SERVER_URL}/api/yonetici/yatirma_onayla`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: talepId, secret_code: sifreInput })
+                });
+                if (response.ok) {
+                    alert("Yatırım Başarıyla Onaylandı ve Bakiye Eklendi!");
+                    talepleriGetir(); 
+                } else {
+                    const err = await response.json();
+                    alert("Hata: " + err.detail);
+                }
+            } catch (error) {
+                alert("İşlem başarısız oldu.");
+            }
+        }
+
+        // فحص وتحديث قائمة الطلبات حياً وتلقائياً كل 4 ثوانٍ إذا كانت كلمة المرور مكتوبة
+        setInterval(talepleriGetir, 4000);
+
+        // ربط عناصر واجهتك الحالية بالضغط لبدء التنفيذ عند تحميل الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            const btn = document.getElementById('sihirli-buton');
+            if (btn) {
+                btn.addEventListener("click", sihirliButonAktifEt);
             }
         });
-    }
-
-    function approveDepositRender(user) {
-        fetch(`${RENDER_SERVER}/admin/approve-deposit`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username: user })
-        }).then(() => alert("✅ تم الموافقة وشحن حساب المشترك بالرصيد الحقيقي سحابياً عبر سيرفر Render!"));
-    }
-
-    function rejectDepositRender(user) {
-        fetch(`${RENDER_SERVER}/admin/reject-deposit`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username: user })
-        });
-    }
-
-    function runAdminTradeRender() {
-        const pass = document.getElementById("adminPass").value;
-        if(pass !== "123456") { alert("كلمة مرور المشرف غير صحيحة!"); return; }
-
-        // إصدار أمر الصفقة للسيرفر لتوزيع الـ 15% على المودعين الحقيقيين
-        fetch(`${RENDER_SERVER}/admin/run-trade-button`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-            alert(`🔥 نجاح تشغيل الصفقة الحية وسيرفر Render قام بتوزيع أرباح الـ 15% للمودعين فقط بنجاح!`);
-        });
-    }
-
-    function approveWithdrawRender(user) {
-        fetch(`${RENDER_SERVER}/admin/approve-withdraw`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username: user })
-        }).then(() => alert("✓ تم تفعيل السحب بنجاح وخصمه من رصيد السيرفر حياً."));
-    }
-
-    function rejectWithdrawRender(user) {
-        fetch(`${RENDER_SERVER}/admin/reject-withdraw`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username: user })
-        });
-    }
-</script>
+    </script>
 </body>
 </html>
