@@ -10,8 +10,8 @@
         .purple-card { border-left: 5px solid #a855f7; }
         .green-card { border-left: 5px solid #22c55e; }
         .orange-card { border-left: 5px solid #f97316; }
-        h2 { color: #00ffd0; font-size: 18px; margin-bottom: 15px; }
-        p { color: #94a3b8; font-size: 14px; }
+        h2 { color: #00ffd0; font-size: 18px; margin-bottom: 15px; text-align: right; direction: rtl; }
+        p { color: #94a3b8; font-size: 14px; text-align: right; direction: rtl; }
         input, button { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #2d3d5a; font-size: 16px; background-color: #0b1426; color: #fff; text-align: center; }
         button { background-color: #1e70e7; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { opacity: 0.9; }
@@ -21,34 +21,33 @@
 
     <!-- 1. قسم تفعيل الأرباح اليومية بنسبة 15% -->
     <div class="card purple-card">
-        <h2>🔐 Ana kontrol paneli ve kar aktivasyonu</h2>
-        <p>Güvenlik için yönetici parolasını girin:</p>
-        <input type="password" id="admin-sifre" placeholder="••••••">
-        <button id="sihirli-buton">🚀 Kampanya devam ediyor ve %15 kar payı canlı olarak dağıtılıyor.</button>
+        <h2>🔐 لوحة التحكم الرئيسية وتفعيل الأرباح اليومية</h2>
+        <p>قم بالضغط على الزر أدناه لتوزيع الأرباح الحية:</p>
+        <button id="sihirli-buton">🚀 تفعيل أرباح اليوم وتوزيع نسبة +15% تلقائياً للمستثمرين</button>
     </div>
 
     <!-- 2. قسم إدارة طلبات الإيداع الواردة -->
     <div class="card green-card">
-        <h2>📩 Gelen para yatırma taleplerini (hesap bakiyesi yükleme) yönetme</h2>
+        <h2>📩 إدارة طلبات إيداع رأس المال الواردة (شحن الرصيد)</h2>
         <div id="ideac-listesi">
-            <p>Şu anda bekleyen herhangi bir gerçek para yatırma talebi bulunmamaktadır.</p>
+            <p>لا توجد طلبات إيداع معلقة حالياً من المستخدمين.</p>
         </div>
     </div>
 
     <!-- 3. قسم إدارة طلبات السحب الواردة -->
     <div class="card orange-card">
-        <h2>📤 Gelen para çekme taleplerinin yönetimi (fon dağıtımı)</h2>
+        <h2>📤 إدارة طلبات سحب الأرباح ورأس المال الواردة</h2>
         <div id="cekme-listesi">
-            <p>Şu anda bekleyen herhangi bir para çekme talebi bulunmamaktadır.</p>
+            <p>لا توجد طلبات سحب معلقة حالياً من المستخدمين.</p>
         </div>
     </div>
 
     <!-- كود الربط والـ JavaScript السحابي الفعلي -->
     <script>
-        // 🌐 ربط مباشر برابط السيرفر الحي الفعلي لإنهاء مشكلة حظر الطلبات
+        // 🌐 الربط المباشر الموثوق بسيرفر الـ Render الحي الخاص بك لتبادل البيانات
         const SERVER_URL = "https://onrender.com";
 
-        // دالة لجلب الطلبات الواردة حياً وتحديث الجداول كل 4 ثوانٍ تلقائياً
+        // دالة جلب الطلبات الواردة حياً وتحديث الجداول كل 4 ثوانٍ تلقائياً
         async function talepleriGetir() {
             try {
                 const response = await fetch(`${SERVER_URL}/api/yonetici/talepler`, { method: "POST" });
@@ -60,14 +59,14 @@
                     if (data.yatirmalar && data.yatirmalar.length > 0) {
                         let htmlContent = "";
                         data.yatirmalar.forEach(talep => {
-                            htmlContent += `<div style="margin:10px; background:#0b1426; padding:12px; border-radius:8px; text-align:left; border-left:4px solid #22c55e;">
-                                👤 Kullanıcı: <b>${talep.kullanici}</b> <br> 💰 Miktar: <b>$${talep.miktar}</b> <br>
-                                <button onclick="yatirmaOnayla('${talep.kullanici}')" style="background:#22c55e; color:white; width:auto; padding:5px 12px; margin-top:5px; border-radius:5px;">Onayla</button>
+                            htmlContent += `<div style="margin:10px; background:#0b1426; padding:12px; border-radius:8px; text-align:right; direction:rtl; border-right:4px solid #22c55e;">
+                                👤 اسم المستخدم: <b>${talep.kullanici}</b> <br> 💰 المبلغ المطلوب: <b>$${talep.miktar} USDT</b> <br>
+                                <button onclick="yatirmaOnayla('${talep.kullanici}')" style="background:#22c55e; color:white; width:auto; padding:5px 15px; margin-top:8px; border-radius:5px; cursor:pointer;">✓ موافقة واعتماد الرصيد</button>
                             </div>`;
                         });
                         ideacAlani.innerHTML = htmlContent;
                     } else {
-                        ideacAlani.innerHTML = "<p>Şu anda bekleyen herhangi bir gerçek para yatırma talebi bulunmamaktadır.</p>";
+                        ideacAlani.innerHTML = "<p>لا توجد طلبات إيداع معلقة حالياً من المستخدمين.</p>";
                     }
 
                     // تحديث قائمة بطاقة السحب البرتقالية حياً من السيرفر
@@ -75,13 +74,13 @@
                     if (data.cekmeler && data.cekmeler.length > 0) {
                         let htmlContent = "";
                         data.cekmeler.forEach(talep => {
-                            htmlContent += `<div style="margin:10px; background:#0b1426; padding:12px; border-radius:8px; text-align:left; border-left:4px solid #f97316;">
-                                👤 Kullanıcı: <b>${talep.kullanici}</b> <br> 💸 Miktar: <b>$${talep.miktar}</b> <br> 🔑 Cüzdan: <span style="font-size:12px; color:#cbd5e1; word-break:break-all;">${talep.cuzdan}</span>
+                            htmlContent += `<div style="margin:10px; background:#0b1426; padding:12px; border-radius:8px; text-align:right; direction:rtl; border-right:4px solid #f97316;">
+                                👤 اسم المستخدم: <b>${talep.kullanici}</b> <br> 💸 المبلغ المراد سحبه: <b>$${talep.miktar} USDT</b> <br> 🔑 عنوان محفظة المستلم: <span style="font-size:12px; color:#cbd5e1; word-break:break-all;">${talep.cuzdan}</span>
                             </div>`;
                         });
                         cekmeAlani.innerHTML = htmlContent;
                     } else {
-                        cekmeAlani.innerHTML = "<p>Şu anda bekleyen herhangi bir para çekme talebi bulunmamaktadır.</p>";
+                        cekmeAlani.innerHTML = "<p>لا توجد طلبات سحب معلقة حالياً من المستخدمين.</p>";
                     }
                 }
             } catch (error) { 
@@ -89,18 +88,18 @@
             }
         }
 
-        // دالة تفعيل "زر الصفقة السحري بنسبة 15%" وتوزيع عمولات الإحالة تلقائياً
+        // دالة تفعيل "زر الصفقة السحري بنسبة 15%" وتوزيع الأرباح تلقائياً
         async function sihirliButonAktifEt() {
             try {
                 const response = await fetch(`${SERVER_URL}/api/yonetici/sihirli_buton`, { method: "POST" });
                 if (response.ok) { 
-                    alert("🚀 Başarılı: Tüm kullanıcılara %15 kâr dağıtıldı!"); 
+                    alert("🚀 تم بنجاح! تم حساب وتوزيع أرباح الـ 15% لجميع الحسابات النشطة حياً."); 
                     talepleriGetir();
                 } else {
-                    alert("İşlem gerçekleştirilemedi.");
+                    alert("فشلت العملية، تأكد من اتصال السيرفر.");
                 }
             } catch (error) { 
-                alert("Bağlantı hatası, sunucuya ulaşılamadı."); 
+                alert("خطأ في الاتصال، لم يتم الوصول للسيرفر."); 
             }
         }
 
@@ -109,22 +108,22 @@
             try {
                 const response = await fetch(`${SERVER_URL}/api/yonetici/yatirma_onayla?username=${user}`, { method: "POST" });
                 if (response.ok) {
-                    alert(`✓ ${user} Hesabı Başarıyla Onaylandı ve Bakiye Eklendi!`);
+                    alert(`✓ تم اعتماد شحن حساب المستخدم (${user}) بنجاح!`);
                     talepleriGetir(); 
                 }
             } catch(e){
-                alert("Onaylama işlemi başarısız.");
+                alert("فشلت عملية الاعتماد.");
             }
         }
 
         // فحص وتحديث شاشة المشرف تلقائياً حياً كل 4 ثوانٍ
         setInterval(talepleriGetir, 4000);
 
-        // ربط الزر البنفسجي للـ 15% بالوظيفة البرمجية عند النقر
+        // ربط الزر البنفسجي للـ 15% بالوظيفة البرمجية عند النقر عند تحميل الصفحة
         document.addEventListener("DOMContentLoaded", () => {
             const btn = document.getElementById('sihirli-buton');
             if(btn) btn.addEventListener("click", sihirliButonAktifEt);
-            // تشغيل الجلب الفوري عند فتح الصفحة لأول مرة
+            // تشغيل الجلب الفوري للطلبات عند فتح اللوحة لأول مرة
             talepleriGetir();
         });
     </script>
